@@ -234,7 +234,6 @@ td {
 .status-loading { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 .status-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 
-/* Estilos de Botones de Acción en Historial */
 .btn-tbl {
     padding: 6px 10px;
     font-size: 12px;
@@ -242,6 +241,7 @@ td {
     margin-right: 4px;
     cursor: pointer;
     font-weight: bold;
+    border: none;
 }
 .btn-tbl-load { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
 .btn-tbl-load:hover { background: var(--primary); color: white; }
@@ -496,7 +496,6 @@ async function guardarEnSheets() {
         costoReal: fmt(calc.costo),
         precio: fmt(calc.precio),
         beneficio: calc.beneficio,
-        // Datos extra para reconstrucción al editar
         precioKg: calc.precioKg,
         peso: calc.peso,
         horas: calc.horas,
@@ -514,7 +513,7 @@ async function guardarEnSheets() {
 
         alert("¡Presupuesto guardado exitosamente!");
         document.getElementById("nombre").value = "";
-        cargarDeSheets();
+        setTimeout(cargarDeSheets, 1000);
     } catch(err) {
         alert("Error al guardar: " + err);
     } finally {
@@ -578,16 +577,19 @@ async function eliminarProyecto(index) {
     let status = document.getElementById("syncStatus");
     status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
 
+    // Calculamos la fila real de Google Sheets teniendo en cuenta la vista invertida
+    let realIndex = (historialLocal.length - 1) - index;
+
     try {
         await fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "delete", rowIndex: index })
+            body: JSON.stringify({ action: "delete", rowIndex: realIndex })
         });
 
         alert("Registro eliminado correctamente.");
-        cargarDeSheets();
+        setTimeout(cargarDeSheets, 1200);
     } catch(err) {
         alert("Error al eliminar: " + err);
     }
