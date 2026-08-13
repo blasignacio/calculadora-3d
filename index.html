@@ -513,7 +513,7 @@ async function guardarEnSheets() {
 
         alert("¡Presupuesto guardado exitosamente!");
         document.getElementById("nombre").value = "";
-        setTimeout(cargarDeSheets, 1000);
+        setTimeout(cargarDeSheets, 1200);
     } catch(err) {
         alert("Error al guardar: " + err);
     } finally {
@@ -533,15 +533,26 @@ async function cargarDeSheets() {
         let html = "";
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
+
+            // Buscamos los datos usando cualquier variante de nombre de columna que pueda tener la planilla
+            let fFecha = x.fecha || x.FECHA || '';
+            let fNombre = x.nombre || x.PROYECTO || x["PROYECTO / CLIENTE"] || 'Sin nombre';
+            let fMaterial = x.materialStr || x.MATERIAL_RESUMEN || x.MATERIALES || '';
+            let fTiempo = x.tiempoStr || x.TIEMPO_RESUMEN || x.TIEMPO || '';
+            let fCant = x.cantidad || x.CANTIDAD || x["CANT."] || 1;
+            let fCostoU = x.costoUnitario || x.COSTO_UNITARIO || x["COSTO UNIT."] || '$0';
+            let fCostoR = x.costoReal || x.COSTO_REAL || x["COSTO REAL"] || '$0';
+            let fPrecio = x.precio || x.COTIZACION_TOTAL || x["COTIZACIÓN TOTAL"] || '$0';
+
             html += `<tr>
-                <td>${x.fecha || ''}</td>
-                <td><strong>${x.nombre || 'Sin nombre'}</strong></td>
-                <td>${x.materialStr || ''}</td>
-                <td>${x.tiempoStr || ''}</td>
-                <td>${x.cantidad || 1} u.</td>
-                <td>${x.costoUnitario || '$0'}</td>
-                <td><span style="color:#94a3b8; font-weight:600;">${x.costoReal || '$0'}</span></td>
-                <td><span style="color:#10b981; font-weight:700;">${x.precio || '$0'}</span></td>
+                <td>${fFecha}</td>
+                <td><strong>${fNombre}</strong></td>
+                <td>${fMaterial}</td>
+                <td>${fTiempo}</td>
+                <td>${fCant} u.</td>
+                <td>${fCostoU}</td>
+                <td><span style="color:#94a3b8; font-weight:600;">${fCostoR}</span></td>
+                <td><span style="color:#10b981; font-weight:700;">${fPrecio}</span></td>
                 <td>
                     <button class="btn-tbl btn-tbl-load" onclick="cargarProyecto(${i})">✏️ Cargar</button>
                     <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto(${i})">🗑️ Borrar</button>
@@ -559,14 +570,38 @@ function cargarProyecto(index) {
     let item = historialLocal[index];
     if(!item) return;
 
-    document.getElementById("nombre").value = item.nombre || "";
-    if(item.tipo) document.getElementById("tipo").value = item.tipo;
-    if(item.precioKg) document.getElementById("precioKg").value = item.precioKg;
-    if(item.peso) document.getElementById("peso").value = item.peso;
-    if(item.horas) document.getElementById("horas").value = item.horas;
-    if(item.minutos) document.getElementById("minutos").value = item.minutos;
-    if(item.cantidad) document.getElementById("cantidad").value = item.cantidad;
+    // Busca inteligentemente el dato sin importar si el encabezado está en mayúsculas o minúsculas
+    let nombre = item.nombre || item.PROYECTO || item["PROYECTO / CLIENTE"] || "";
+    let precioKg = item.precioKg || item.PRECIO_KG || item["PRECIO KG"] || "";
+    let peso = item.peso || item.PESO || item["PESO"] || "";
+    let horas = item.horas || item.HORAS || item["HORAS"] || "";
+    let minutos = item.minutos || item.MINUTOS || item["MINUTOS"] || "";
+    let cantidad = item.cantidad || item.CANTIDAD || item["CANT."] || 1;
+    let tipo = item.tipo || item.TIPO || item["TIPO"] || "PLA";
 
+    // Si viene solo el texto combinado "PLA (300g)", extrae la palabra "PLA"
+    let matStr = item.materialStr || item.MATERIAL_RESUMEN || item["MATERIALES"] || "";
+    if(matStr && matStr.includes("(")) {
+        tipo = matStr.split("(")[0].trim();
+    }
+
+    // Vuelca los valores en los campos de la pantalla
+    document.getElementById("nombre").value = nombre;
+    if(precioKg) document.getElementById("precioKg").value = precioKg;
+    if(peso) document.getElementById("peso").value = peso;
+    if(horas) document.getElementById("horas").value = horas;
+    if(minutos) document.getElementById("minutos").value = minutos;
+    if(cantidad) document.getElementById("cantidad").value = cantidad;
+    
+    let selectTipo = document.getElementById("tipo");
+    for(let i = 0; i < selectTipo.options.length; i++) {
+        if(selectTipo.options[i].value.toLowerCase() === tipo.toLowerCase()) {
+            selectTipo.selectedIndex = i;
+            break;
+        }
+    }
+
+    // Calcula de nuevo automáticamente
     calcular();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -577,7 +612,6 @@ async function eliminarProyecto(index) {
     let status = document.getElementById("syncStatus");
     status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
 
-    // Calculamos la fila real de Google Sheets teniendo en cuenta la vista invertida
     let realIndex = (historialLocal.length - 1) - index;
 
     try {
