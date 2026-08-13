@@ -20,6 +20,7 @@
     --success-hover: #059669;
     --accent: #06b6d4;
     --danger: #ef4444;
+    --danger-hover: #dc2626;
     --warning: #f59e0b;
     --border: rgba(255, 255, 255, 0.05);
 }
@@ -232,6 +233,20 @@ td {
 }
 .status-loading { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 .status-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+/* Estilos de Botones de Acción en Historial */
+.btn-tbl {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-tbl-load { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+.btn-tbl-load:hover { background: var(--primary); color: white; }
+.btn-tbl-del { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.btn-tbl-del:hover { background: var(--danger); color: white; }
 </style>
 </head>
 <body>
@@ -356,7 +371,7 @@ td {
     </div>
 
     <div class="card">
-        <h3>Historial en Google Sheets <span id="syncStatus"></span></h3>
+        <h3>Historial Registrado <span id="syncStatus"></span></h3>
         <div class="table-container">
             <table>
                 <thead>
@@ -369,6 +384,7 @@ td {
                         <th>Costo Unit.</th>
                         <th>Costo Real</th>
                         <th>Cotización Total</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="historial"></tbody>
@@ -378,8 +394,9 @@ td {
 </div>
 
 <script>
-// URL de tu API de Google Apps Script integrada
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3zLHzijNhxy_QKKCKam_B4Kuk-_PCeP0YxwMXpcax-1ghs4PiQ/exec";
+
+let historialLocal = [];
 
 function fmt(v){
     return "$ " + new Intl.NumberFormat('es-AR').format(Math.round(v));
@@ -453,7 +470,12 @@ function calcular() {
         precio: precio,
         costoUnitario: corregido / cantidad,
         cantidad: cantidad,
-        beneficio: beneficio
+        beneficio: beneficio,
+        precioKg: precioKg,
+        peso: peso,
+        horas: document.getElementById("horas").value,
+        minutos: document.getElementById("minutos").value,
+        tipo: document.getElementById("tipo").value
     };
 }
 
@@ -464,6 +486,7 @@ async function guardarEnSheets() {
     btn.innerText = "Guardando... ⏳";
 
     let payload = {
+        action: "save",
         fecha: new Date().toLocaleDateString("es-AR"),
         nombre: document.getElementById("nombre").value || "Sin nombre",
         materialStr: document.getElementById("tipo").value + " (" + (document.getElementById("peso").value || "0") + "g)",
@@ -472,7 +495,13 @@ async function guardarEnSheets() {
         costoUnitario: fmt(calc.costoUnitario),
         costoReal: fmt(calc.costo),
         precio: fmt(calc.precio),
-        beneficio: calc.beneficio
+        beneficio: calc.beneficio,
+        // Datos extra para reconstrucción al editar
+        precioKg: calc.precioKg,
+        peso: calc.peso,
+        horas: calc.horas,
+        minutos: calc.minutos,
+        tipo: calc.tipo
     };
 
     try {
@@ -483,11 +512,11 @@ async function guardarEnSheets() {
             body: JSON.stringify(payload)
         });
 
-        alert("¡Presupuesto guardado exitosamente en Google Sheets!");
+        alert("¡Presupuesto guardado exitosamente!");
         document.getElementById("nombre").value = "";
         cargarDeSheets();
     } catch(err) {
-        alert("Error al guardar en la nube: " + err);
+        alert("Error al guardar: " + err);
     } finally {
         btn.disabled = false;
         btn.innerText = "Guardar en la Nube ☁️";
@@ -500,26 +529,67 @@ async function cargarDeSheets() {
 
     try {
         let res = await fetch(SCRIPT_URL);
-        let datos = await res.json();
+        historialLocal = await res.json();
         
         let html = "";
-        for(let i = datos.length - 1; i >= 0; i--) {
-            let x = datos[i];
+        for(let i = historialLocal.length - 1; i >= 0; i--) {
+            let x = historialLocal[i];
             html += `<tr>
-                <td>${x.fecha}</td>
-                <td><strong>${x.nombre}</strong></td>
-                <td>${x.materialStr}</td>
-                <td>${x.tiempoStr}</td>
-                <td>${x.cantidad} u.</td>
-                <td>${x.costoUnitario}</td>
-                <td><span style="color:#94a3b8; font-weight:600;">${x.costoReal}</span></td>
-                <td><span style="color:#10b981; font-weight:700;">${x.precio}</span></td>
+                <td>${x.fecha || ''}</td>
+                <td><strong>${x.nombre || 'Sin nombre'}</strong></td>
+                <td>${x.materialStr || ''}</td>
+                <td>${x.tiempoStr || ''}</td>
+                <td>${x.cantidad || 1} u.</td>
+                <td>${x.costoUnitario || '$0'}</td>
+                <td><span style="color:#94a3b8; font-weight:600;">${x.costoReal || '$0'}</span></td>
+                <td><span style="color:#10b981; font-weight:700;">${x.precio || '$0'}</span></td>
+                <td>
+                    <button class="btn-tbl btn-tbl-load" onclick="cargarProyecto(${i})">✏️ Cargar</button>
+                    <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto(${i})">🗑️ Borrar</button>
+                </td>
             </tr>`;
         }
         document.getElementById("historial").innerHTML = html;
         status.innerHTML = `<span class="status-badge status-success">Sincronizado</span>`;
     } catch(err) {
         status.innerHTML = `<span style="color:var(--danger); font-size:12px;">Error de conexión</span>`;
+    }
+}
+
+function cargarProyecto(index) {
+    let item = historialLocal[index];
+    if(!item) return;
+
+    document.getElementById("nombre").value = item.nombre || "";
+    if(item.tipo) document.getElementById("tipo").value = item.tipo;
+    if(item.precioKg) document.getElementById("precioKg").value = item.precioKg;
+    if(item.peso) document.getElementById("peso").value = item.peso;
+    if(item.horas) document.getElementById("horas").value = item.horas;
+    if(item.minutos) document.getElementById("minutos").value = item.minutos;
+    if(item.cantidad) document.getElementById("cantidad").value = item.cantidad;
+
+    calcular();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function eliminarProyecto(index) {
+    if(!confirm("¿Estás seguro de que querés borrar este registro del historial?")) return;
+
+    let status = document.getElementById("syncStatus");
+    status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", rowIndex: index })
+        });
+
+        alert("Registro eliminado correctamente.");
+        cargarDeSheets();
+    } catch(err) {
+        alert("Error al eliminar: " + err);
     }
 }
 
