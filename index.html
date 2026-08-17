@@ -399,6 +399,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 let historialLocal = [];
 
 function fmt(v){
+    if (typeof v === "string" && v.startsWith("$")) return v;
     let num = Number(v) || 0;
     return "$ " + new Intl.NumberFormat('es-AR').format(Math.round(num));
 }
@@ -523,6 +524,25 @@ async function guardarEnSheets() {
     }
 }
 
+function obtenerValor(obj, listaNombres) {
+    if (!obj) return "";
+    for (let nombre of listaNombres) {
+        if (obj[nombre] !== undefined && obj[nombre] !== null && obj[nombre] !== "") {
+            return obj[nombre];
+        }
+    }
+    // Búsqueda flexible ignorando guiones bajos y espacios
+    const clavesObj = Object.keys(obj);
+    for (let nombre of listaNombres) {
+        let limpioN = nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        let encon = clavesObj.find(k => k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === limpioN);
+        if (encon && obj[encon] !== undefined && obj[encon] !== null && obj[encon] !== "") {
+            return obj[encon];
+        }
+    }
+    return "";
+}
+
 async function cargarDeSheets() {
     let status = document.getElementById("syncStatus");
     status.innerHTML = `<span class="status-badge status-loading">Sincronizando...</span>`;
@@ -535,22 +555,19 @@ async function cargarDeSheets() {
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
 
-            // Busca exactamente las llaves que devuelve tu Google Sheet según la foto
-            let fFecha = x.FECHA || x.fecha || '';
-            let fNombre = x["PROYECTO / CLIENTE"] || x.PROYECTO || x.nombre || 'Sin nombre';
-            let fMaterial = x.MATERIALES || x.materialStr || '';
-            let fTiempo = x.TIEMPO || x.tiempoStr || '';
-            let fCant = x["CANT."] || x.cantidad || 1;
+            let fFecha = obtenerValor(x, ["FECHA", "fecha"]);
+            let fNombre = obtenerValor(x, ["PROYECTO", "nombre"]) || "Sin nombre";
+            let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "materialStr"]);
+            let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "tiempoStr"]);
+            let fCant = obtenerValor(x, ["CANTIDAD", "cantidad"]) || 1;
             
-            // Si la celda trae número o texto formateado, lo procesa correctamente sin mostrar $0
-            let fCostoU = x["COSTO UNIT."] || x.costoUnitario || '$0';
-            let fCostoR = x["COSTO REAL"] || x.costoReal || '$0';
-            let fPrecio = x["COTIZACIÓN TOTAL"] || x.precio || '$0';
+            let fCostoU = obtenerValor(x, ["COSTO_UNITARIO", "costoUnitario"]) || "$0";
+            let fCostoR = obtenerValor(x, ["COSTO_REAL", "COSTO _REAL", "costoReal"]) || "$0";
+            let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "precio"]) || "$0";
 
-            // Formatea el texto si es que viene como número directo desde Apps Script
-            if (typeof fCostoU === "number") fCostoU = fmt(fCostoU);
-            if (typeof fCostoR === "number") fCostoR = fmt(fCostoR);
-            if (typeof fPrecio === "number") fPrecio = fmt(fPrecio);
+            fCostoU = fmt(fCostoU);
+            fCostoR = fmt(fCostoR);
+            fPrecio = fmt(fPrecio);
 
             html += `<tr>
                 <td>${fFecha}</td>
@@ -578,15 +595,15 @@ function cargarProyecto(index) {
     let item = historialLocal[index];
     if(!item) return;
 
-    let nombre = item["PROYECTO / CLIENTE"] || item.PROYECTO || item.nombre || "";
-    let precioKg = item["PRECIO KG"] || item.precioKg || "";
-    let peso = item["PESO"] || item.peso || "";
-    let horas = item["HORAS"] || item.horas || "";
-    let minutos = item["MINUTOS"] || item.minutos || "";
-    let cantidad = item["CANT."] || item.cantidad || 1;
-    let tipo = item["TIPO"] || item.tipo || "PLA";
+    let nombre = obtenerValor(item, ["PROYECTO", "nombre"]);
+    let precioKg = obtenerValor(item, ["PRECIO_KG", "precioKg"]);
+    let peso = obtenerValor(item, ["PESO", "peso"]);
+    let horas = obtenerValor(item, ["HORAS", "horas"]);
+    let minutos = obtenerValor(item, ["MINUTOS", "minutos"]);
+    let cantidad = obtenerValor(item, ["CANTIDAD", "cantidad"]) || 1;
+    let tipo = obtenerValor(item, ["TIPO", "tipo"]) || "PLA";
 
-    let matStr = item.MATERIALES || item.materialStr || "";
+    let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "materialStr"]);
     if(matStr && matStr.includes("(")) {
         tipo = matStr.split("(")[0].trim();
     }
