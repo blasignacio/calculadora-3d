@@ -376,15 +376,15 @@ td {
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Proyecto / Cliente</th>
-                        <th>Materiales</th>
-                        <th>Tiempo</th>
-                        <th>Cant.</th>
-                        <th>Costo Unit.</th>
-                        <th>Costo Real</th>
-                        <th>Cotización Total</th>
-                        <th>Acciones</th>
+                        <th>FECHA</th>
+                        <th>PROYECTO / CLIENTE</th>
+                        <th>MATERIALES</th>
+                        <th>TIEMPO</th>
+                        <th>CANT.</th>
+                        <th>COSTO UNIT.</th>
+                        <th>COSTO REAL</th>
+                        <th>COTIZACIÓN TOTAL</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody id="historial"></tbody>
@@ -399,7 +399,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 let historialLocal = [];
 
 function fmt(v){
-    return "$ " + new Intl.NumberFormat('es-AR').format(Math.round(v));
+    let num = Number(v) || 0;
+    return "$ " + new Intl.NumberFormat('es-AR').format(Math.round(num));
 }
 
 function guardarConfigFija() {
@@ -534,15 +535,22 @@ async function cargarDeSheets() {
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
 
-            // Buscamos los datos usando cualquier variante de nombre de columna que pueda tener la planilla
-            let fFecha = x.fecha || x.FECHA || '';
-            let fNombre = x.nombre || x.PROYECTO || x["PROYECTO / CLIENTE"] || 'Sin nombre';
-            let fMaterial = x.materialStr || x.MATERIAL_RESUMEN || x.MATERIALES || '';
-            let fTiempo = x.tiempoStr || x.TIEMPO_RESUMEN || x.TIEMPO || '';
-            let fCant = x.cantidad || x.CANTIDAD || x["CANT."] || 1;
-            let fCostoU = x.costoUnitario || x.COSTO_UNITARIO || x["COSTO UNIT."] || '$0';
-            let fCostoR = x.costoReal || x.COSTO_REAL || x["COSTO REAL"] || '$0';
-            let fPrecio = x.precio || x.COTIZACION_TOTAL || x["COTIZACIÓN TOTAL"] || '$0';
+            // Busca exactamente las llaves que devuelve tu Google Sheet según la foto
+            let fFecha = x.FECHA || x.fecha || '';
+            let fNombre = x["PROYECTO / CLIENTE"] || x.PROYECTO || x.nombre || 'Sin nombre';
+            let fMaterial = x.MATERIALES || x.materialStr || '';
+            let fTiempo = x.TIEMPO || x.tiempoStr || '';
+            let fCant = x["CANT."] || x.cantidad || 1;
+            
+            // Si la celda trae número o texto formateado, lo procesa correctamente sin mostrar $0
+            let fCostoU = x["COSTO UNIT."] || x.costoUnitario || '$0';
+            let fCostoR = x["COSTO REAL"] || x.costoReal || '$0';
+            let fPrecio = x["COTIZACIÓN TOTAL"] || x.precio || '$0';
+
+            // Formatea el texto si es que viene como número directo desde Apps Script
+            if (typeof fCostoU === "number") fCostoU = fmt(fCostoU);
+            if (typeof fCostoR === "number") fCostoR = fmt(fCostoR);
+            if (typeof fPrecio === "number") fPrecio = fmt(fPrecio);
 
             html += `<tr>
                 <td>${fFecha}</td>
@@ -570,22 +578,19 @@ function cargarProyecto(index) {
     let item = historialLocal[index];
     if(!item) return;
 
-    // Busca inteligentemente el dato sin importar si el encabezado está en mayúsculas o minúsculas
-    let nombre = item.nombre || item.PROYECTO || item["PROYECTO / CLIENTE"] || "";
-    let precioKg = item.precioKg || item.PRECIO_KG || item["PRECIO KG"] || "";
-    let peso = item.peso || item.PESO || item["PESO"] || "";
-    let horas = item.horas || item.HORAS || item["HORAS"] || "";
-    let minutos = item.minutos || item.MINUTOS || item["MINUTOS"] || "";
-    let cantidad = item.cantidad || item.CANTIDAD || item["CANT."] || 1;
-    let tipo = item.tipo || item.TIPO || item["TIPO"] || "PLA";
+    let nombre = item["PROYECTO / CLIENTE"] || item.PROYECTO || item.nombre || "";
+    let precioKg = item["PRECIO KG"] || item.precioKg || "";
+    let peso = item["PESO"] || item.peso || "";
+    let horas = item["HORAS"] || item.horas || "";
+    let minutos = item["MINUTOS"] || item.minutos || "";
+    let cantidad = item["CANT."] || item.cantidad || 1;
+    let tipo = item["TIPO"] || item.tipo || "PLA";
 
-    // Si viene solo el texto combinado "PLA (300g)", extrae la palabra "PLA"
-    let matStr = item.materialStr || item.MATERIAL_RESUMEN || item["MATERIALES"] || "";
+    let matStr = item.MATERIALES || item.materialStr || "";
     if(matStr && matStr.includes("(")) {
         tipo = matStr.split("(")[0].trim();
     }
 
-    // Vuelca los valores en los campos de la pantalla
     document.getElementById("nombre").value = nombre;
     if(precioKg) document.getElementById("precioKg").value = precioKg;
     if(peso) document.getElementById("peso").value = peso;
@@ -601,7 +606,6 @@ function cargarProyecto(index) {
         }
     }
 
-    // Calcula de nuevo automáticamente
     calcular();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
