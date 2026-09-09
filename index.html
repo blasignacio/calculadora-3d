@@ -407,7 +407,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 
 let historialLocal = [];
 
-// Formateador de moneda corregido
+// Formateador de moneda
 function fmt(v){
     if (v === null || v === undefined || v === "") return "$0";
     
@@ -424,6 +424,25 @@ function fmt(v){
     let num = Number(v);
     if (isNaN(num)) return "$0";
     return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Formateador de fecha limpia (DD/MM/YYYY)
+function fmtFecha(strFecha) {
+    if (!strFecha) return "";
+    let s = String(strFecha).trim();
+    if (s.includes("T")) {
+        s = s.split("T")[0]; // Corta todo lo que esté después de la 'T'
+    }
+    if (s.includes("-")) {
+        let partes = s.split("-");
+        if (partes.length === 3) {
+            // Si viene como YYYY-MM-DD
+            if (partes[0].length === 4) {
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            }
+        }
+    }
+    return s;
 }
 
 function guardarConfigFija() {
@@ -453,7 +472,6 @@ function calcular() {
     let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
     let cantidad = Number(document.getElementById("cantidad").value) || 1;
 
-    // Campos del insumo extra
     let extraDesc = document.getElementById("extraDesc").value.trim() || "Insumo Extra";
     let extraCostoUnitario = Number(document.getElementById("extraCosto").value) || 0;
     let extraCostoTotal = extraCostoUnitario * cantidad;
@@ -466,7 +484,6 @@ function calcular() {
     let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
     let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
 
-    // Subtotal sumando el extra
     let subtotal = material + desperdicio + desgaste + energia + extraCostoTotal;
     
     let falla = Number(document.getElementById("falla").value) || 0;
@@ -486,7 +503,6 @@ function calcular() {
         boxUnitario.style.display = "none";
     }
 
-    // Generar el desglose técnico
     let htmlDetalle = `
         <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
         <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
@@ -528,15 +544,21 @@ async function guardarEnSheets() {
     btn.disabled = true;
     btn.innerText = "Guardando... ⏳";
 
-    // Armando el resumen de material + extra si corresponde
     let matResumen = calc.tipo + " (" + (calc.peso || "0") + "g)";
     if (calc.extraCostoUnitario > 0) {
         matResumen += " + Extra: " + calc.extraDesc + " (" + fmt(calc.extraCostoUnitario) + ")";
     }
 
+    // Formato de fecha limpia explícito DD/MM/YYYY
+    let hoy = new Date();
+    let dia = String(hoy.getDate()).padStart(2, '0');
+    let mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    let anio = hoy.getFullYear();
+    let fechaLimpia = `${dia}/${mes}/${anio}`;
+
     let payload = {
         action: "save",
-        fecha: new Date().toLocaleDateString("es-AR"),
+        fecha: fechaLimpia,
         nombre: document.getElementById("nombre").value || "Sin nombre",
         materialStr: matResumen,
         tiempoStr: (calc.horas || "0") + "h " + (calc.minutos || "0") + "m",
@@ -603,7 +625,7 @@ async function cargarDeSheets() {
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
 
-            let fFecha = obtenerValor(x, ["FECHA", "fecha"]);
+            let fFecha = fmtFecha(obtenerValor(x, ["FECHA", "fecha"]));
             let fNombre = obtenerValor(x, ["PROYECTO", "nombre"]) || "Sin nombre";
             let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "materialStr"]);
             let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "tiempoStr"]);
