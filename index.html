@@ -31,10 +31,12 @@
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-sizing: border-box;
         }
 
         h1 {
             font-size: 1.5rem;
+            margin-top: 0;
             margin-bottom: 20px;
             text-align: center;
             color: var(--primary-color);
@@ -51,7 +53,7 @@
             font-size: 0.9rem;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border-color);
@@ -60,7 +62,7 @@
             font-size: 1rem;
         }
 
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: var(--primary-color);
         }
@@ -136,7 +138,7 @@
 <div class="container">
     <h1>Calculadora de Impresión 3D</h1>
     
-    <form id="calcForm">
+    <form id="calcForm" onsubmit="return false;">
         <div class="form-group">
             <label for="nombrePieza">Nombre del Trabajo / Pieza</label>
             <input type="text" id="nombrePieza" placeholder="Ej. Soporte para Auriculares" required>
@@ -145,48 +147,48 @@
         <div class="grid-2">
             <div class="form-group">
                 <label for="pesoGramos">Peso Utilizado (g)</label>
-                <input type="number" id="pesoGramos" step="0.1" placeholder="50" required>
+                <input type="number" id="pesoGramos" step="any" placeholder="50" required>
             </div>
             <div class="form-group">
                 <label for="costoKilo">Costo del Filamento ($/kg)</label>
-                <input type="number" id="costoKilo" step="0.01" placeholder="20000" required>
+                <input type="number" id="costoKilo" step="any" placeholder="20000" required>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="form-group">
                 <label for="tiempoHoras">Tiempo de Impresión (hs)</label>
-                <input type="number" id="tiempoHoras" step="0.1" placeholder="2.5" required>
+                <input type="number" id="tiempoHoras" step="any" placeholder="2.5" required>
             </div>
             <div class="form-group">
                 <label for="consumoW">Consumo Impresora (Watts)</label>
-                <input type="number" id="consumoW" value="150" required>
+                <input type="number" id="consumoW" step="any" value="150" required>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="form-group">
                 <label for="costoKwh">Costo Energía ($/kWh)</label>
-                <input type="number" id="costoKwh" step="0.01" value="100" required>
+                <input type="number" id="costoKwh" step="any" value="100" required>
             </div>
             <div class="form-group">
                 <label for="depreciacionHora">Desgaste/Máquina ($/h)</label>
-                <input type="number" id="depreciacionHora" step="0.01" value="150" required>
+                <input type="number" id="depreciacionHora" step="any" value="150" required>
             </div>
         </div>
 
         <div class="grid-2">
             <div class="form-group">
                 <label for="margenGanancia">Margen de Ganancia (%)</label>
-                <input type="number" id="margenGanancia" value="100" required>
+                <input type="number" id="margenGanancia" step="any" value="100" required>
             </div>
             <div class="form-group">
                 <label for="fallaPorcentaje">Margen de Error/Falla (%)</label>
-                <input type="number" id="fallaPorcentaje" value="10" required>
+                <input type="number" id="fallaPorcentaje" step="any" value="10" required>
             </div>
         </div>
 
-        <button type="button" onclick="calcularYEnviar()">Calcular y Registrar</button>
+        <button type="button" id="btnCalcular">Calcular y Registrar</button>
     </form>
 
     <div class="results" id="resultsBlock">
@@ -216,79 +218,88 @@
 </div>
 
 <script>
-    // REEMPLAZAR CON TU URL DE DESPLIEGUE DE GOOGLE APPS SCRIPT
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
+    // Coloca aquí la URL de tu Web App de Google Apps Script si quieres guardar los datos en Google Sheets
+    var APPS_SCRIPT_URL = "";
 
-    function calcularYEnviar() {
-        const nombre = document.getElementById('nombrePieza').value;
-        const peso = parseFloat(document.getElementById('pesoGramos').value) || 0;
-        const costoKilo = parseFloat(document.getElementById('costoKilo').value) || 0;
-        const tiempo = parseFloat(document.getElementById('tiempoHoras').value) || 0;
-        const consumoW = parseFloat(document.getElementById('consumoW').value) || 0;
-        const costoKwh = parseFloat(document.getElementById('costoKwh').value) || 0;
-        const depreciacion = parseFloat(document.getElementById('depreciacionHora').value) || 0;
-        const margen = parseFloat(document.getElementById('margenGanancia').value) || 0;
-        const falla = parseFloat(document.getElementById('fallaPorcentaje').value) || 0;
+    function mostrarEstado(mensaje, esExito) {
+        var el = document.getElementById('statusMessage');
+        if (!el) return;
+        el.innerText = mensaje;
+        el.className = "status-message " + (esExito ? "status-success" : "status-error");
+        el.style.display = "block";
+    }
+
+    function procesarCalculo() {
+        var nombre = document.getElementById('nombrePieza').value;
+        var peso = parseFloat(document.getElementById('pesoGramos').value) || 0;
+        var costoKilo = parseFloat(document.getElementById('costoKilo').value) || 0;
+        var tiempo = parseFloat(document.getElementById('tiempoHoras').value) || 0;
+        var consumoW = parseFloat(document.getElementById('consumoW').value) || 0;
+        var costoKwh = parseFloat(document.getElementById('costoKwh').value) || 0;
+        var depreciacion = parseFloat(document.getElementById('depreciacionHora').value) || 0;
+        var margen = parseFloat(document.getElementById('margenGanancia').value) || 0;
+        var falla = parseFloat(document.getElementById('fallaPorcentaje').value) || 0;
 
         if (!nombre || peso <= 0 || tiempo <= 0) {
-            mostrarEstado("Por favor completa los campos principales correctamente.", false);
+            mostrarEstado("Por favor ingresa un nombre, peso y tiempo válidos.", false);
             return;
         }
 
-        // Cálculos internos
-        const costoMaterial = (peso / 1000) * costoKilo;
-        const costoEnergia = (tiempo * (consumoW / 1000)) * costoKwh;
-        const costoDesgaste = tiempo * depreciacion;
+        // Cálculos
+        var costoMaterial = (peso / 1000) * costoKilo;
+        var costoEnergia = (tiempo * (consumoW / 1000)) * costoKwh;
+        var costoDesgaste = tiempo * depreciacion;
         
-        let costoBase = costoMaterial + costoEnergia + costoDesgaste;
-        costoBase += costoBase * (falla / 100); // Añadir porcentaje por riesgo de falla
+        var costoBase = costoMaterial + costoEnergia + costoDesgaste;
+        costoBase += costoBase * (falla / 100);
 
-        const precioVenta = costoBase * (1 + (margen / 100));
+        var precioVenta = costoBase * (1 + (margen / 100));
 
-        // Actualización de la interfaz
+        // Renderizado
         document.getElementById('resMaterial').innerText = "$" + costoMaterial.toFixed(2);
         document.getElementById('resEnergia').innerText = "$" + costoEnergia.toFixed(2);
         document.getElementById('resDepreciacion').innerText = "$" + costoDesgaste.toFixed(2);
         document.getElementById('resCostoBase').innerText = "$" + costoBase.toFixed(2);
         document.getElementById('resPrecioVenta').innerText = "$" + precioVenta.toFixed(2);
 
-        // Envío de datos al endpoint de Google Apps Script
-        const datos = {
-            fecha: new Date().toISOString(),
-            nombre: nombre,
-            pesoGramos: peso,
-            tiempoHoras: tiempo,
-            costoBase: costoBase.toFixed(2),
-            precioVenta: precioVenta.toFixed(2)
-        };
-
-        if (APPS_SCRIPT_URL && !APPS_SCRIPT_URL.includes("TU_SCRIPT_ID")) {
+        // Envío a Google Apps Script
+        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
             mostrarEstado("Enviando registro a Google Sheets...", true);
             
+            var datos = {
+                fecha: new Date().toLocaleString(),
+                nombre: nombre,
+                pesoGramos: peso,
+                tiempoHoras: tiempo,
+                costoBase: costoBase.toFixed(2),
+                precioVenta: precioVenta.toFixed(2)
+            };
+
             fetch(APPS_SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(datos)
             })
-            .then(() => {
+            .then(function() {
                 mostrarEstado("¡Registro guardado con éxito!", true);
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error("Error al registrar:", error);
-                mostrarEstado("Error al conectar con Google Sheets.", false);
+                mostrarEstado("Error de conexión al enviar los datos.", false);
             });
         } else {
-            mostrarEstado("Cálculo realizado (sin envío a Google Sheets: URL no configurada).", true);
+            mostrarEstado("Cálculo realizado con éxito.", true);
         }
     }
 
-    function mostrarEstado(mensaje, esExito) {
-        const el = document.getElementById('statusMessage');
-        el.innerText = mensaje;
-        el.className = "status-message " + (esExito ? "status-success" : "status-error");
-        el.style.display = "block";
-    }
+    // Event Listener seguro cuando el DOM está listo
+    document.addEventListener("DOMContentLoaded", function() {
+        var btn = document.getElementById('btnCalcular');
+        if (btn) {
+            btn.addEventListener('click', procesarCalculo);
+        }
+    });
 </script>
 
 </body>
