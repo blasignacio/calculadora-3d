@@ -3,21 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Costos 3D</title>
+    <title>Calculadora de Impresión 3D</title>
     <style>
-        :root {
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --text-color: #1f2937;
-            --border-color: #e5e7eb;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -25,46 +15,47 @@
         }
 
         .container {
-            background-color: var(--card-bg);
+            background-color: #ffffff;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             box-sizing: border-box;
         }
 
         h1 {
+            text-align: center;
+            color: #2563eb;
             font-size: 1.5rem;
             margin-top: 0;
             margin-bottom: 20px;
-            text-align: center;
-            color: var(--primary-color);
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-weight: bold;
+            margin-bottom: 5px;
             font-size: 0.9rem;
+            color: #374151;
         }
 
         input {
             width: 100%;
             padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
             box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
             font-size: 1rem;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: #2563eb;
         }
 
         .grid-2 {
@@ -73,28 +64,27 @@
             gap: 12px;
         }
 
-        button {
+        .btn-main {
             width: 100%;
-            background-color: var(--primary-color);
+            background-color: #2563eb;
             color: white;
             padding: 12px;
             border: none;
             border-radius: 6px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-            transition: background-color 0.2s;
+            margin-top: 15px;
         }
 
-        button:hover {
-            background-color: var(--primary-hover);
+        .btn-main:hover {
+            background-color: #1d4ed8;
         }
 
         .results {
-            margin-top: 24px;
-            padding-top: 16px;
-            border-top: 2px dashed var(--border-color);
+            margin-top: 20px;
+            border-top: 2px dashed #e5e7eb;
+            padding-top: 15px;
         }
 
         .result-row {
@@ -102,23 +92,24 @@
             justify-content: space-between;
             margin-bottom: 8px;
             font-size: 0.95rem;
+            color: #4b5563;
         }
 
-        .result-row.total {
-            font-size: 1.2rem;
+        .total {
             font-weight: bold;
-            color: var(--primary-color);
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border-color);
+            color: #2563eb;
+            font-size: 1.2rem;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            margin-top: 10px;
         }
 
-        .status-message {
-            margin-top: 12px;
+        .status-box {
+            margin-top: 15px;
             padding: 10px;
             border-radius: 6px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             display: none;
         }
 
@@ -138,70 +129,68 @@
 <div class="container">
     <h1>Calculadora de Impresión 3D</h1>
     
-    <form id="calcForm" onsubmit="return false;">
+    <div class="form-group">
+        <label>Nombre de la Pieza / Trabajo</label>
+        <input type="text" id="nombrePieza" placeholder="Ej. Soporte Auriculares">
+    </div>
+
+    <div class="grid-2">
         <div class="form-group">
-            <label for="nombrePieza">Nombre del Trabajo / Pieza</label>
-            <input type="text" id="nombrePieza" placeholder="Ej. Soporte para Auriculares" required>
+            <label>Peso Utilizado (g)</label>
+            <input type="number" id="pesoGramos" placeholder="50">
         </div>
-
-        <div class="grid-2">
-            <div class="form-group">
-                <label for="pesoGramos">Peso Utilizado (g)</label>
-                <input type="number" id="pesoGramos" step="any" placeholder="50" required>
-            </div>
-            <div class="form-group">
-                <label for="costoKilo">Costo del Filamento ($/kg)</label>
-                <input type="number" id="costoKilo" step="any" placeholder="20000" required>
-            </div>
+        <div class="form-group">
+            <label>Costo Filamento ($/kg)</label>
+            <input type="number" id="costoKilo" placeholder="20000">
         </div>
+    </div>
 
-        <div class="grid-2">
-            <div class="form-group">
-                <label for="tiempoHoras">Tiempo de Impresión (hs)</label>
-                <input type="number" id="tiempoHoras" step="any" placeholder="2.5" required>
-            </div>
-            <div class="form-group">
-                <label for="consumoW">Consumo Impresora (Watts)</label>
-                <input type="number" id="consumoW" step="any" value="150" required>
-            </div>
+    <div class="grid-2">
+        <div class="form-group">
+            <label>Tiempo (Horas)</label>
+            <input type="number" id="tiempoHoras" placeholder="2.5">
         </div>
-
-        <div class="grid-2">
-            <div class="form-group">
-                <label for="costoKwh">Costo Energía ($/kWh)</label>
-                <input type="number" id="costoKwh" step="any" value="100" required>
-            </div>
-            <div class="form-group">
-                <label for="depreciacionHora">Desgaste/Máquina ($/h)</label>
-                <input type="number" id="depreciacionHora" step="any" value="150" required>
-            </div>
+        <div class="form-group">
+            <label>Consumo (Watts)</label>
+            <input type="number" id="consumoW" value="150">
         </div>
+    </div>
 
-        <div class="grid-2">
-            <div class="form-group">
-                <label for="margenGanancia">Margen de Ganancia (%)</label>
-                <input type="number" id="margenGanancia" step="any" value="100" required>
-            </div>
-            <div class="form-group">
-                <label for="fallaPorcentaje">Margen de Error/Falla (%)</label>
-                <input type="number" id="fallaPorcentaje" step="any" value="10" required>
-            </div>
+    <div class="grid-2">
+        <div class="form-group">
+            <label>Costo Energía ($/kWh)</label>
+            <input type="number" id="costoKwh" value="100">
         </div>
+        <div class="form-group">
+            <label>Desgaste Máquina ($/h)</label>
+            <input type="number" id="depreciacionHora" value="150">
+        </div>
+    </div>
 
-        <button type="button" id="btnCalcular">Calcular y Registrar</button>
-    </form>
+    <div class="grid-2">
+        <div class="form-group">
+            <label>Margen Ganancia (%)</label>
+            <input type="number" id="margenGanancia" value="100">
+        </div>
+        <div class="form-group">
+            <label>Margen Error/Falla (%)</label>
+            <input type="number" id="fallaPorcentaje" value="10">
+        </div>
+    </div>
 
-    <div class="results" id="resultsBlock">
+    <button class="btn-main" onclick="calcularYGuardar()">Calcular y Guardar en Registro</button>
+
+    <div class="results">
         <div class="result-row">
-            <span>Costo de Material:</span>
+            <span>Costo Material:</span>
             <span id="resMaterial">$0.00</span>
         </div>
         <div class="result-row">
-            <span>Costo de Energía:</span>
+            <span>Costo Energía:</span>
             <span id="resEnergia">$0.00</span>
         </div>
         <div class="result-row">
-            <span>Desgaste de Máquina:</span>
+            <span>Desgaste Máquina:</span>
             <span id="resDepreciacion">$0.00</span>
         </div>
         <div class="result-row">
@@ -209,27 +198,27 @@
             <span id="resCostoBase">$0.00</span>
         </div>
         <div class="result-row total">
-            <span>Precio de Venta Sugerido:</span>
+            <span>Precio Venta Sugerido:</span>
             <span id="resPrecioVenta">$0.00</span>
         </div>
     </div>
 
-    <div id="statusMessage" class="status-message"></div>
+    <div id="statusBox" class="status-box"></div>
 </div>
 
 <script>
-    // Coloca aquí la URL de tu Web App de Google Apps Script si quieres guardar los datos en Google Sheets
-    var APPS_SCRIPT_URL = "";
+    // URL de tu Web App en Google Apps Script
+    // Si tienes el enlace de Google Apps Script colócalo dentro de las comillas.
+    var WEB_APP_URL = "";
 
     function mostrarEstado(mensaje, esExito) {
-        var el = document.getElementById('statusMessage');
-        if (!el) return;
-        el.innerText = mensaje;
-        el.className = "status-message " + (esExito ? "status-success" : "status-error");
-        el.style.display = "block";
+        var box = document.getElementById('statusBox');
+        box.innerText = mensaje;
+        box.className = "status-box " + (esExito ? "status-success" : "status-error");
+        box.style.display = "block";
     }
 
-    function procesarCalculo() {
+    function calcularYGuardar() {
         var nombre = document.getElementById('nombrePieza').value;
         var peso = parseFloat(document.getElementById('pesoGramos').value) || 0;
         var costoKilo = parseFloat(document.getElementById('costoKilo').value) || 0;
@@ -245,29 +234,29 @@
             return;
         }
 
-        // Cálculos
+        // 1. Cálculos de costos
         var costoMaterial = (peso / 1000) * costoKilo;
         var costoEnergia = (tiempo * (consumoW / 1000)) * costoKwh;
         var costoDesgaste = tiempo * depreciacion;
         
         var costoBase = costoMaterial + costoEnergia + costoDesgaste;
-        costoBase += costoBase * (falla / 100);
+        costoBase += costoBase * (falla / 100); // Sumar margen de error
 
         var precioVenta = costoBase * (1 + (margen / 100));
 
-        // Renderizado
+        // 2. Mostrar los resultados en la interfaz
         document.getElementById('resMaterial').innerText = "$" + costoMaterial.toFixed(2);
         document.getElementById('resEnergia').innerText = "$" + costoEnergia.toFixed(2);
         document.getElementById('resDepreciacion').innerText = "$" + costoDesgaste.toFixed(2);
         document.getElementById('resCostoBase').innerText = "$" + costoBase.toFixed(2);
         document.getElementById('resPrecioVenta').innerText = "$" + precioVenta.toFixed(2);
 
-        // Envío a Google Apps Script
-        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
-            mostrarEstado("Enviando registro a Google Sheets...", true);
-            
-            var datos = {
-                fecha: new Date().toLocaleString(),
+        // 3. Envío y Guardado de datos a Google Sheets
+        if (WEB_APP_URL && WEB_APP_URL.trim() !== "") {
+            mostrarEstado("Guardando registro en Google Sheets...", true);
+
+            var paqueteDatos = {
+                fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString(),
                 nombre: nombre,
                 pesoGramos: peso,
                 tiempoHoras: tiempo,
@@ -275,31 +264,23 @@
                 precioVenta: precioVenta.toFixed(2)
             };
 
-            fetch(APPS_SCRIPT_URL, {
+            fetch(WEB_APP_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(datos)
+                body: JSON.stringify(paqueteDatos)
             })
             .then(function() {
-                mostrarEstado("¡Registro guardado con éxito!", true);
+                mostrarEstado("¡Cálculo realizado y guardado con éxito!", true);
             })
-            .catch(function(error) {
-                console.error("Error al registrar:", error);
-                mostrarEstado("Error de conexión al enviar los datos.", false);
+            .catch(function(err) {
+                console.error(err);
+                mostrarEstado("Cálculo realizado, pero falló el envío a Google Sheets.", false);
             });
         } else {
-            mostrarEstado("Cálculo realizado con éxito.", true);
+            mostrarEstado("Cálculo realizado con éxito. (Nota: Para guardar en Google Sheets debes poner tu URL en WEB_APP_URL)", true);
         }
     }
-
-    // Event Listener seguro cuando el DOM está listo
-    document.addEventListener("DOMContentLoaded", function() {
-        var btn = document.getElementById('btnCalcular');
-        if (btn) {
-            btn.addEventListener('click', procesarCalculo);
-        }
-    });
 </script>
 
 </body>
