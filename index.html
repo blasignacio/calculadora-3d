@@ -3,113 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Impresión 3D</title>
+    <title>Calculadora de Costos de Impresión 3D</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f6;
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --border: #d1d5db;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
             padding: 20px;
             display: flex;
             justify-content: center;
         }
 
-        .container {
-            background-color: #ffffff;
+        .main-container {
             width: 100%;
-            max-width: 500px;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
             padding: 24px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            box-sizing: border-box;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        h1, h2 {
+            color: var(--primary);
+            margin-bottom: 16px;
         }
 
         h1 {
             text-align: center;
-            color: #2563eb;
-            font-size: 1.5rem;
-            margin-top: 0;
-            margin-bottom: 20px;
+            font-size: 1.8rem;
         }
 
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            color: #374151;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #2563eb;
+        h2 {
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 8px;
         }
 
         .grid-2 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
         }
 
-        .btn-main {
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        input, select {
             width: 100%;
-            background-color: #2563eb;
-            color: white;
-            padding: 12px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Insumos adicionales */
+        .insumo-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 15px;
+            transition: background-color 0.2s;
+            font-size: 0.95rem;
         }
 
-        .btn-main:hover {
-            background-color: #1d4ed8;
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
         }
 
-        .results {
-            margin-top: 20px;
-            border-top: 2px dashed #e5e7eb;
-            padding-top: 15px;
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            padding: 8px 12px;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        /* Resultados */
+        .results-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
         }
 
         .result-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            padding: 6px 0;
             font-size: 0.95rem;
-            color: #4b5563;
         }
 
-        .total {
-            font-weight: bold;
-            color: #2563eb;
+        .result-row.total {
+            border-top: 2px solid #93c5fd;
+            margin-top: 8px;
+            padding-top: 8px;
             font-size: 1.2rem;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
-            margin-top: 10px;
+            font-weight: bold;
+            color: var(--primary);
         }
 
-        .status-box {
-            margin-top: 15px;
+        /* Tabla de Historial */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+
+        .status-msg {
             padding: 10px;
             border-radius: 6px;
             text-align: center;
             font-size: 0.9rem;
+            margin-top: 12px;
             display: none;
         }
 
@@ -126,95 +216,177 @@
 </head>
 <body>
 
-<div class="container">
-    <h1>Calculadora de Impresión 3D</h1>
+<div class="main-container">
     
-    <div class="form-group">
-        <label>Nombre de la Pieza / Trabajo</label>
-        <input type="text" id="nombrePieza" placeholder="Ej. Soporte Auriculares">
+    <div class="card">
+        <h1>Calculadora de Impresión 3D</h1>
+        
+        <form id="calcForm" onsubmit="return false;">
+            
+            <h2>1. Datos Generales del Trabajo</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="nombrePieza">Nombre del Trabajo / Pieza</label>
+                    <input type="text" id="nombrePieza" placeholder="Ej. Soporte Auriculares v2" required>
+                </div>
+                <div class="form-group">
+                    <label for="tipoFilamento">Tipo de Filamento</label>
+                    <input type="text" id="tipoFilamento" placeholder="PLA, PETG, ABS..." value="PLA">
+                </div>
+            </div>
+
+            <h2>2. Material y Tiempo</h2>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label for="pesoGramos">Peso Impresión (g)</label>
+                    <input type="number" id="pesoGramos" step="0.1" placeholder="85" required>
+                </div>
+                <div class="form-group">
+                    <label for="costoKilo">Costo Filamento ($/kg)</label>
+                    <input type="number" id="costoKilo" step="0.01" value="22000" required>
+                </div>
+                <div class="form-group">
+                    <label for="tiempoHoras">Tiempo Impresión (hs)</label>
+                    <input type="number" id="tiempoHoras" step="0.1" placeholder="4.5" required>
+                </div>
+            </div>
+
+            <h2>3. Consumo, Desgaste y Parámetros</h2>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label for="consumoW">Consumo Impresora (W)</label>
+                    <input type="number" id="consumoW" value="150" required>
+                </div>
+                <div class="form-group">
+                    <label for="costoKwh">Costo Energía ($/kWh)</label>
+                    <input type="number" id="costoKwh" step="0.01" value="120" required>
+                </div>
+                <div class="form-group">
+                    <label for="depreciacionHora">Desgaste/Máquina ($/h)</label>
+                    <input type="number" id="depreciacionHora" step="0.01" value="180" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="margenGanancia">Margen de Ganancia (%)</label>
+                    <input type="number" id="margenGanancia" value="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="fallaPorcentaje">Margen por Falla / Riesgo (%)</label>
+                    <input type="number" id="fallaPorcentaje" value="10" required>
+                </div>
+            </div>
+
+            <h2>4. Insumos Adicionales (Tornillos, Embalaje, Post-procesado)</h2>
+            <div id="insumosContainer">
+                <!-- Se agregan dinámicamente -->
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="agregarInsumo()" style="margin-bottom: 16px;">+ Agregar Insumo Extra</button>
+
+            <button type="button" class="btn btn-primary" onclick="calcularYGuardar()">Calcular y Registrar Cotización</button>
+        </form>
+
+        <div class="results-box">
+            <div class="result-row">
+                <span>Costo Filamento:</span>
+                <span id="resMaterial">$0,00</span>
+            </div>
+            <div class="result-row">
+                <span>Costo Energía:</span>
+                <span id="resEnergia">$0,00</span>
+            </div>
+            <div class="result-row">
+                <span>Costo Desgaste Máquina:</span>
+                <span id="resDepreciacion">$0,00</span>
+            </div>
+            <div class="result-row">
+                <span>Total Insumos Extra:</span>
+                <span id="resInsumos">$0,00</span>
+            </div>
+            <div class="result-row">
+                <span>Costo Base Total (con margen de falla):</span>
+                <span id="resCostoBase">$0,00</span>
+            </div>
+            <div class="result-row total">
+                <span>Precio de Venta Sugerido:</span>
+                <span id="resPrecioVenta">$0,00</span>
+            </div>
+        </div>
+
+        <div id="statusBox" class="status-msg"></div>
     </div>
 
-    <div class="grid-2">
-        <div class="form-group">
-            <label>Peso Utilizado (g)</label>
-            <input type="number" id="pesoGramos" placeholder="50">
-        </div>
-        <div class="form-group">
-            <label>Costo Filamento ($/kg)</label>
-            <input type="number" id="costoKilo" placeholder="20000">
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="form-group">
-            <label>Tiempo (Horas)</label>
-            <input type="number" id="tiempoHoras" placeholder="2.5">
-        </div>
-        <div class="form-group">
-            <label>Consumo (Watts)</label>
-            <input type="number" id="consumoW" value="150">
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="form-group">
-            <label>Costo Energía ($/kWh)</label>
-            <input type="number" id="costoKwh" value="100">
-        </div>
-        <div class="form-group">
-            <label>Desgaste Máquina ($/h)</label>
-            <input type="number" id="depreciacionHora" value="150">
+    <!-- Historial de Trabajos -->
+    <div class="card">
+        <h2>Historial de Cotizaciones Guardadas</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Nombre</th>
+                        <th>Peso (g)</th>
+                        <th>Tiempo (h)</th>
+                        <th>Costo Base</th>
+                        <th>Precio Venta</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaHistorial">
+                    <!-- Se cargan dinámicamente -->
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="grid-2">
-        <div class="form-group">
-            <label>Margen Ganancia (%)</label>
-            <input type="number" id="margenGanancia" value="100">
-        </div>
-        <div class="form-group">
-            <label>Margen Error/Falla (%)</label>
-            <input type="number" id="fallaPorcentaje" value="10">
-        </div>
-    </div>
-
-    <button class="btn-main" onclick="calcularYGuardar()">Calcular y Guardar en Registro</button>
-
-    <div class="results">
-        <div class="result-row">
-            <span>Costo Material:</span>
-            <span id="resMaterial">$0.00</span>
-        </div>
-        <div class="result-row">
-            <span>Costo Energía:</span>
-            <span id="resEnergia">$0.00</span>
-        </div>
-        <div class="result-row">
-            <span>Desgaste Máquina:</span>
-            <span id="resDepreciacion">$0.00</span>
-        </div>
-        <div class="result-row">
-            <span>Costo Base Total:</span>
-            <span id="resCostoBase">$0.00</span>
-        </div>
-        <div class="result-row total">
-            <span>Precio Venta Sugerido:</span>
-            <span id="resPrecioVenta">$0.00</span>
-        </div>
-    </div>
-
-    <div id="statusBox" class="status-box"></div>
 </div>
 
 <script>
-    // URL de tu Web App en Google Apps Script
-    // Si tienes el enlace de Google Apps Script colócalo dentro de las comillas.
-    var WEB_APP_URL = "";
+    // URL de tu Web App desplegada en Google Apps Script
+    var APPS_SCRIPT_URL = "";
+
+    var historialCalculos = [];
+
+    function formatearMoneda(valor) {
+        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(valor);
+    }
+
+    function agregarInsumo(nombre = "", cantidad = 1, costoUni = 0) {
+        var container = document.getElementById('insumosContainer');
+        var div = document.createElement('div');
+        div.className = 'insumo-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Concepto (ej. Tornillo M3)" value="${nombre}" class="insumo-nombre">
+            <input type="number" placeholder="Cant." value="${cantidad}" step="1" class="insumo-cant">
+            <input type="number" placeholder="$/Unid." value="${costoUni}" step="0.01" class="insumo-precio">
+            <button type="button" class="btn btn-danger" onclick="eliminarInsumo(this)">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function eliminarInsumo(btn) {
+        btn.parentElement.remove();
+    }
+
+    function obtenerCostoInsumos() {
+        var nombres = document.querySelectorAll('.insumo-nombre');
+        var cantidades = document.querySelectorAll('.insumo-cant');
+        var precios = document.querySelectorAll('.insumo-precio');
+        
+        var total = 0;
+        for (var i = 0; i < nombres.length; i++) {
+            var cant = parseFloat(cantidades[i].value) || 0;
+            var prec = parseFloat(precios[i].value) || 0;
+            total += cant * prec;
+        }
+        return total;
+    }
 
     function mostrarEstado(mensaje, esExito) {
         var box = document.getElementById('statusBox');
         box.innerText = mensaje;
-        box.className = "status-box " + (esExito ? "status-success" : "status-error");
+        box.className = "status-msg " + (esExito ? "status-success" : "status-error");
         box.style.display = "block";
     }
 
@@ -230,56 +402,89 @@
         var falla = parseFloat(document.getElementById('fallaPorcentaje').value) || 0;
 
         if (!nombre || peso <= 0 || tiempo <= 0) {
-            mostrarEstado("Por favor ingresa un nombre, peso y tiempo válidos.", false);
+            mostrarEstado("Por favor, completa el nombre, peso y tiempo válidos.", false);
             return;
         }
 
-        // 1. Cálculos de costos
+        // Cálculos
         var costoMaterial = (peso / 1000) * costoKilo;
         var costoEnergia = (tiempo * (consumoW / 1000)) * costoKwh;
         var costoDesgaste = tiempo * depreciacion;
-        
-        var costoBase = costoMaterial + costoEnergia + costoDesgaste;
-        costoBase += costoBase * (falla / 100); // Sumar margen de error
+        var costoInsumosExtra = obtenerCostoInsumos();
 
-        var precioVenta = costoBase * (1 + (margen / 100));
+        var costoSubtotal = costoMaterial + costoEnergia + costoDesgaste + costoInsumosExtra;
+        var costoBaseTotal = costoSubtotal + (costoSubtotal * (falla / 100));
 
-        // 2. Mostrar los resultados en la interfaz
-        document.getElementById('resMaterial').innerText = "$" + costoMaterial.toFixed(2);
-        document.getElementById('resEnergia').innerText = "$" + costoEnergia.toFixed(2);
-        document.getElementById('resDepreciacion').innerText = "$" + costoDesgaste.toFixed(2);
-        document.getElementById('resCostoBase').innerText = "$" + costoBase.toFixed(2);
-        document.getElementById('resPrecioVenta').innerText = "$" + precioVenta.toFixed(2);
+        var precioVenta = costoBaseTotal * (1 + (margen / 100));
 
-        // 3. Envío y Guardado de datos a Google Sheets
-        if (WEB_APP_URL && WEB_APP_URL.trim() !== "") {
-            mostrarEstado("Guardando registro en Google Sheets...", true);
+        // Renderizar Resultados
+        document.getElementById('resMaterial').innerText = formatearMoneda(costoMaterial);
+        document.getElementById('resEnergia').innerText = formatearMoneda(costoEnergia);
+        document.getElementById('resDepreciacion').innerText = formatearMoneda(costoDesgaste);
+        document.getElementById('resInsumos').innerText = formatearMoneda(costoInsumosExtra);
+        document.getElementById('resCostoBase').innerText = formatearMoneda(costoBaseTotal);
+        document.getElementById('resPrecioVenta').innerText = formatearMoneda(precioVenta);
 
-            var paqueteDatos = {
-                fecha: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString(),
-                nombre: nombre,
-                pesoGramos: peso,
-                tiempoHoras: tiempo,
-                costoBase: costoBase.toFixed(2),
-                precioVenta: precioVenta.toFixed(2)
-            };
+        // Guardar Registro Localmente
+        var registro = {
+            id: Date.now(),
+            fecha: new Date().toLocaleString('es-AR'),
+            nombre: nombre,
+            peso: peso,
+            tiempo: tiempo,
+            costoBase: costoBaseTotal,
+            precioVenta: precioVenta
+        };
 
-            fetch(WEB_APP_URL, {
+        historialCalculos.unshift(registro);
+        actualizarTablaHistorial();
+
+        // Guardar en Google Sheets
+        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
+            mostrarEstado("Enviando cotización a Google Sheets...", true);
+
+            fetch(APPS_SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(paqueteDatos)
+                body: JSON.stringify(registro)
             })
             .then(function() {
-                mostrarEstado("¡Cálculo realizado y guardado con éxito!", true);
+                mostrarEstado("¡Cotización calculada y registrada exitosamente en Google Sheets!", true);
             })
             .catch(function(err) {
                 console.error(err);
-                mostrarEstado("Cálculo realizado, pero falló el envío a Google Sheets.", false);
+                mostrarEstado("Calculado con éxito, pero hubo un error de conexión con Google Sheets.", false);
             });
         } else {
-            mostrarEstado("Cálculo realizado con éxito. (Nota: Para guardar en Google Sheets debes poner tu URL en WEB_APP_URL)", true);
+            mostrarEstado("Cotización calculada y añadida al historial local.", true);
         }
+    }
+
+    function actualizarTablaHistorial() {
+        var tbody = document.getElementById('tablaHistorial');
+        tbody.innerHTML = "";
+
+        historialCalculos.forEach(function(item) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.fecha}</td>
+                <td><strong>${item.nombre}</strong></td>
+                <td>${item.peso} g</td>
+                <td>${item.tiempo} hs</td>
+                <td>${formatearMoneda(item.costoBase)}</td>
+                <td><strong>${formatearMoneda(item.precioVenta)}</strong></td>
+                <td><button class="btn btn-danger" onclick="borrarRegistro(${item.id})">Borrar</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function borrarRegistro(id) {
+        historialCalculos = historialCalculos.filter(function(item) {
+            return item.id !== id;
+        });
+        actualizarTablaHistorial();
     }
 </script>
 
