@@ -1,100 +1,721 @@
-// Reemplaza esta constante con la URL de tu Web App
-const WEB_APP_URL = "TU_URL_DE_WEB_APP_AQUI";
-
-function guardarEnSheet() {
-  // Captura de valores desde la interfaz
-  const proyecto = document.getElementById("nombrePieza") ? document.getElementById("nombrePieza").value : "Sin nombre";
-  const tipo = document.getElementById("tipoMaterial") ? document.getElementById("tipoMaterial").value : "PLA";
-  const peso = document.getElementById("gramosMaterial") ? document.getElementById("gramosMaterial").value : 0;
-  
-  const nombreExtra = document.getElementById("nombreExtra") ? document.getElementById("nombreExtra").value : "";
-  const costoExtra = document.getElementById("costoExtra") ? document.getElementById("costoExtra").value : 0;
-  
-  const horas = document.getElementById("horas") ? document.getElementById("horas").value : 0;
-  const minutos = document.getElementById("minutos") ? document.getElementById("minutos").value : 0;
-  
-  const cantidad = document.getElementById("cantidad") ? document.getElementById("cantidad").value : 1;
-  const costoUnitario = document.getElementById("costoUnitario") ? document.getElementById("costoUnitario").value : 0;
-  const costoReal = document.getElementById("costoTotal") ? document.getElementById("costoTotal").value : 0;
-  const cotizacionReal = document.getElementById("precioVenta") ? document.getElementById("precioVenta").value : 0;
-  const beneficio = document.getElementById("beneficio") ? document.getElementById("beneficio").value : (cotizacionReal - costoReal);
-  const precioKg = document.getElementById("precioKg") ? document.getElementById("precioKg").value : 0;
-
-  // Formato para MATERIAL_RESUMEN: Solo el material principal y los gramos
-  const materialResumenFormat = tipo + " (" + peso + "g)";
-
-  // Formato para MATERIAL_EXTRA: Insumos adicionales por separado
-  const materialExtraFormat = (nombreExtra && nombreExtra.trim() !== "") 
-    ? nombreExtra + " ($ " + costoExtra + ")" 
-    : "-";
-
-  // Formato para TIEMPO_RESUMEN
-  const tiempoResumenFormat = horas + "h " + minutos + "m";
-
-  // Objeto estructurado según las claves exactas de tus encabezados
-  const payload = {
-    PROYECTO: proyecto,
-    MATERIAL_RESUMEN: materialResumenFormat,
-    MATERIAL_EXTRA: materialExtraFormat,
-    TIEMPO_RESUMEN: tiempoResumenFormat,
-    CANTIDAD: cantidad,
-    COSTO_UNITARIO: costoUnitario,
-    COSTO_REAL: costoReal,
-    COTIZACION_REAL: cotizacionReal,
-    BENEFICIO: beneficio,
-    PRECIO_KG: precioKg,
-    PESO: peso,
-    HORAS: horas,
-    MINUTOS: minutos,
-    TIPO: tipo
-  };
-
-  fetch(WEB_APP_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    alert("Cotización guardada exitosamente en Google Sheets");
-    cargarHistorial();
-  })
-  .catch(error => {
-    console.error("Error al guardar:", error);
-    alert("Hubo un error al guardar la cotización.");
-  });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b0f19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RAFA 3D - Panel de Costos</title>
+<style>
+:root {
+    --bg-main: #0b0f19;
+    --bg-card: #131c2e;
+    --bg-input: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #10b981;
+    --success-hover: #059669;
+    --accent: #06b6d4;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --warning: #f59e0b;
+    --border: rgba(255, 255, 255, 0.05);
 }
 
-function cargarHistorial() {
-  fetch(WEB_APP_URL)
-    .then(response => response.json())
-    .then(res => {
-      if (res.status === "success") {
-        console.log("Historial recuperado correctamente:", res.data);
-      }
-    })
-    .catch(err => console.error("Error al obtener historial:", err));
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    margin: 0;
+    padding: 16px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
 }
 
-function eliminarRegistro(nombreProyecto) {
-  const payload = {
-    action: "delete",
-    PROYECTO: nombreProyecto
-  };
-
-  fetch(WEB_APP_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    alert("Registro eliminado");
-    cargarHistorial();
-  })
-  .catch(err => console.error("Error al eliminar:", err));
+.container {
+    max-width: 1280px;
+    margin: auto;
 }
+
+.header {
+    background: linear-gradient(135deg, #1e40af, #0891b2);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.header .version {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 4px;
+}
+
+.card {
+    background: var(--bg-card);
+    padding: 18px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+
+.grid-main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 4px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+button {
+    flex: 1 1 140px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-calc { background: var(--primary); color: white; }
+.btn-save { background: var(--success); color: white; }
+.btn-sync { background: var(--accent); color: white; }
+
+.dashboard-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.kpi-box {
+    background: #142035;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.kpi-box .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.kpi-box .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.kpi-box.final {
+    background: linear-gradient(145deg, #132d24, #0a1f18);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+.kpi-box.final .kpi-value { color: #10b981; font-size: 32px; }
+
+.kpi-box.unit {
+    background: linear-gradient(145deg, #112936, #091a24);
+    border-color: rgba(6, 182, 212, 0.2);
+}
+.kpi-box.unit .kpi-value { color: var(--accent); }
+
+.breakdown-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    font-size: 13px;
+}
+
+.breakdown-item {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 3px solid var(--text-muted);
+}
+.breakdown-item.mat { border-left-color: var(--primary); }
+.breakdown-item.desg { border-left-color: var(--warning); }
+.breakdown-item.nrg { border-left-color: var(--accent); }
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    border-bottom: 2px solid var(--border);
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.status-loading { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.status-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+.btn-tbl {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+.btn-tbl-load { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+.btn-tbl-load:hover { background: var(--primary); color: white; }
+.btn-tbl-del { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.btn-tbl-del:hover { background: var(--danger); color: white; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>RAFA 3D</h1>
+        <div class="version">Cloud App — Sincronizado con Google Sheets</div>
+    </div>
+
+    <div class="card">
+        <label style="margin-top: 0;">Identificación del Proyecto / Cliente</label>
+        <input id="nombre" placeholder="Ej: Maceta Groot - Cliente S.A.">
+    </div>
+
+    <div class="grid-main">
+        <div class="card">
+            <h3>1. Análisis de Material</h3>
+            <label>Tipo de filamento</label>
+            <select id="tipo">
+                <option>PLA</option>
+                <option>PETG</option>
+                <option>ASA</option>
+                <option>ABS</option>
+                <option>TPU</option>
+                <option>Nylon</option>
+                <option>Otro</option>
+            </select>
+
+            <label>Precio por Kilograma ($)</label>
+            <input id="precioKg" type="number" placeholder="Ej: 25000">
+
+            <label>Peso unitario de la pieza (g)</label>
+            <input id="peso" type="number" placeholder="Ej: 350">
+
+            <label>Margen de desperdicio (%)</label>
+            <input id="desperdicio" type="number" value="5">
+        </div>
+
+        <div class="card">
+            <h3>2. Tiempos y Logística</h3>
+            <label>Horas de impresión</label>
+            <input id="horas" type="number" placeholder="0">
+
+            <label>Minutos de impresión</label>
+            <input id="minutos" type="number" placeholder="0">
+
+            <label>Volumen de piezas (Cantidad)</label>
+            <input id="cantidad" type="number" value="1">
+        </div>
+
+        <div class="card">
+            <h3>3. Amortización de Máquina</h3>
+            <label>Valor de reposición del equipo ($)</label>
+            <input id="valorImp" type="number" placeholder="Ej: 850000" onchange="guardarConfigFija()">
+
+            <label>Vida útil nominal (horas)</label>
+            <input id="vidaUtil" type="number" value="10000" onchange="guardarConfigFija()">
+        </div>
+
+        <div class="card">
+            <h3>4. Costo Energético</h3>
+            <label>Consumo promedio estimado (W)</label>
+            <input id="consumo" type="number" value="100" onchange="guardarConfigFija()">
+
+            <label>Tarifa eléctrica por kWh ($)</label>
+            <input id="kwh" type="number" placeholder="Ej: 120" onchange="guardarConfigFija()">
+        </div>
+
+        <div class="card">
+            <h3>5. Gestión de Riesgos</h3>
+            <label>Factor de Falla Tolerar</label>
+            <select id="falla">
+                <option value="0">Sin riesgo (0%)</option>
+                <option value="2">Bajo riesgo (2%)</option>
+                <option value="5" selected>Tasa Normal (5%)</option>
+                <option value="10">Riesgo Alto (10%)</option>
+                <option value="15">Complejo / Crítico (15%)</option>
+                <option value="25">Diseño Experimental (25%)</option>
+                <option value="50">Máximo Extremo (50%)</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>6. Margen Comercial</h3>
+            <label>Rendimiento / Ganancia</label>
+            <select id="beneficio">
+                <option value="20">Margen Base (20%)</option>
+                <option value="50">Económico (50%)</option>
+                <option value="100" selected>Estándar (100%)</option>
+                <option value="200">Alta Demanda (200%)</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>7. Insumos y Extras</h3>
+            <label>Descripción del insumo extra</label>
+            <input id="extraDesc" type="text" placeholder="Ej: Kit velador, cable y portalámparas">
+
+            <label>Costo del insumo extra unitario ($)</label>
+            <input id="extraCosto" type="number" placeholder="Ej: 3500">
+        </div>
+    </div>
+
+    <div class="actions-bar">
+        <button class="btn-calc" onclick="calcular()">Calcular Costos</button>
+        <button class="btn-save" id="btnGuardar" onclick="guardarEnSheets()">Guardar en la Nube ☁️</button>
+        <button class="btn-sync" onclick="cargarDeSheets()">Actualizar Historial 🔄</button>
+    </div>
+
+    <div class="dashboard-results">
+        <div class="kpi-box">
+            <div class="kpi-label">Costo Operativo Real</div>
+            <div class="kpi-value" id="costoReal" style="color: var(--text-main);">$0</div>
+        </div>
+        <div class="kpi-box final">
+            <div class="kpi-label">Precio de Venta Sugerido</div>
+            <div class="kpi-value" id="precioFinal">$0</div>
+        </div>
+        <div class="kpi-box unit" id="boxUnitario" style="display: none;">
+            <div class="kpi-label">Costo Neto por Unidad</div>
+            <div class="kpi-value" id="costoUnitario">$0</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Desglose técnico del presupuesto</h3>
+        <div class="breakdown-list" id="detalle">
+            <div style="color: var(--text-muted); font-style: italic;">Presioná "Calcular Costos" para ver el análisis detallado.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Historial Registrado <span id="syncStatus"></span></h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>FECHA</th>
+                        <th>PROYECTO</th>
+                        <th>FILAMENTO</th>
+                        <th>MATERIAL EXTRA</th>
+                        <th>TIEMPO</th>
+                        <th>CANT.</th>
+                        <th>COSTO UNIT.</th>
+                        <th>COSTO REAL</th>
+                        <th>COTIZACIÓN TOTAL</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="historial"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3zLHzijNhxy_QKKCKam_B4Kuk-_PCeP0YxwMXpcax-1ghs4PiQ/exec";
+
+let historialLocal = [];
+
+function fmt(v){
+    if (v === null || v === undefined || v === "") return "$0";
+    if (typeof v === "string") {
+        let limpio = v.trim();
+        if (limpio.startsWith("$")) return limpio;
+        limpio = limpio.replace(/[^0-9.,-]/g, '');
+        let num = parseFloat(limpio.replace(',', '.'));
+        if (!isNaN(num)) {
+            return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+    let num = Number(v);
+    if (isNaN(num)) return "$0";
+    return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtFecha(strFecha) {
+    if (!strFecha) return "";
+    let s = String(strFecha).trim();
+    if (s.includes("T")) s = s.split("T")[0];
+    if (s.includes("-")) {
+        let partes = s.split("-");
+        if (partes.length === 3 && partes[0].length === 4) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+    return s;
+}
+
+function guardarConfigFija() {
+    const config = {
+        valorImp: document.getElementById("valorImp").value,
+        vidaUtil: document.getElementById("vidaUtil").value,
+        consumo: document.getElementById("consumo").value,
+        kwh: document.getElementById("kwh").value
+    };
+    localStorage.setItem("rafa3d_config", JSON.stringify(config));
+}
+
+function cargarConfigFija() {
+    const config = JSON.parse(localStorage.getItem("rafa3d_config"));
+    if(config) {
+        if(config.valorImp) document.getElementById("valorImp").value = config.valorImp;
+        if(config.vidaUtil) document.getElementById("vidaUtil").value = config.vidaUtil;
+        if(config.consumo) document.getElementById("consumo").value = config.consumo;
+        if(config.kwh) document.getElementById("kwh").value = config.kwh;
+    }
+}
+
+function calcular() {
+    let precioKg = Number(document.getElementById("precioKg").value) || 0;
+    let peso = Number(document.getElementById("peso").value) || 0;
+    let desp = Number(document.getElementById("desperdicio").value) || 0;
+    let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
+    let cantidad = Number(document.getElementById("cantidad").value) || 1;
+
+    let extraDesc = document.getElementById("extraDesc").value.trim();
+    let extraCostoUnitario = Number(document.getElementById("extraCosto").value) || 0;
+    let extraCostoTotal = extraCostoUnitario * cantidad;
+
+    let pesoTotal = peso * cantidad;
+    let horasTotales = horasUnitarias * cantidad;
+
+    let material = (precioKg / 1000) * pesoTotal;
+    let desperdicio = material * (desp / 100);
+    let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
+    let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
+
+    let subtotal = material + desperdicio + desgaste + energia + extraCostoTotal;
+    
+    let falla = Number(document.getElementById("falla").value) || 0;
+    let corregido = subtotal * (1 + falla / 100);
+    let beneficio = Number(document.getElementById("beneficio").value) || 0;
+
+    let precio = corregido * (1 + beneficio / 100);
+
+    document.getElementById("costoReal").innerHTML = fmt(corregido);
+    document.getElementById("precioFinal").innerHTML = fmt(precio);
+
+    const boxUnitario = document.getElementById("boxUnitario");
+    if (cantidad > 1) {
+        boxUnitario.style.display = "block";
+        document.getElementById("costoUnitario").innerHTML = fmt(corregido / cantidad);
+    } else {
+        boxUnitario.style.display = "none";
+    }
+
+    let htmlDetalle = `
+        <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
+        <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
+        <div class="breakdown-item mat"><span>Desperdicio (${desp}%):</span> <strong>${fmt(desperdicio)}</strong></div>
+        <div class="breakdown-item desg"><span>Desgaste Impresora:</span> <strong>${fmt(desgaste)} (${horasTotales.toFixed(1)} hs)</strong></div>
+        <div class="breakdown-item nrg"><span>Consumo de Red:</span> <strong>${fmt(energia)}</strong></div>
+    `;
+
+    if (extraCostoTotal > 0) {
+        htmlDetalle += `<div class="breakdown-item" style="border-left-color: #8b5cf6;"><span>Extra (${extraDesc || 'Sin nombre'}):</span> <strong>${fmt(extraCostoTotal)}</strong></div>`;
+    }
+
+    htmlDetalle += `
+        <div class="breakdown-item"><span>Margen de Falla (${falla}%):</span> <strong>+ ${fmt(corregido - subtotal)}</strong></div>
+        <div class="breakdown-item" style="border-left-color: var(--success)"><span>Retorno (${beneficio}%):</span> <strong>+ ${fmt(precio - corregido)}</strong></div>
+    `;
+
+    document.getElementById("detalle").innerHTML = htmlDetalle;
+    
+    return {
+        costo: corregido,
+        precio: precio,
+        costoUnitario: corregido / cantidad,
+        cantidad: cantidad,
+        beneficio: beneficio,
+        precioKg: precioKg,
+        peso: peso,
+        horas: document.getElementById("horas").value,
+        minutos: document.getElementById("minutos").value,
+        tipo: document.getElementById("tipo").value,
+        extraDesc: extraDesc,
+        extraCostoUnitario: extraCostoUnitario
+    };
+}
+
+async function guardarEnSheets() {
+    let calc = calcular();
+    let btn = document.getElementById("btnGuardar");
+    btn.disabled = true;
+    btn.innerText = "Guardando... ⏳";
+
+    let matResumen = calc.tipo + " (" + (calc.peso || "0") + "g)";
+    let extraResumen = calc.extraCostoUnitario > 0 ? (calc.extraDesc || "Extra") + " (" + fmt(calc.extraCostoUnitario) + ")" : "-";
+
+    let hoy = new Date();
+    let dia = String(hoy.getDate()).padStart(2, '0');
+    let mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    let anio = hoy.getFullYear();
+    let fechaLimpia = `${dia}/${mes}/${anio}`;
+
+    let payload = {
+        action: "save",
+        fecha: fechaLimpia,
+        nombre: document.getElementById("nombre").value || "Sin nombre",
+        materialStr: matResumen,
+        extraStr: extraResumen,
+        tiempoStr: (calc.horas || "0") + "h " + (calc.minutos || "0") + "m",
+        cantidad: calc.cantidad,
+        costoUnitario: fmt(calc.costoUnitario),
+        costoReal: fmt(calc.costo),
+        precio: fmt(calc.precio),
+        beneficio: calc.beneficio,
+        precioKg: calc.precioKg,
+        peso: calc.peso,
+        horas: calc.horas,
+        minutos: calc.minutos,
+        tipo: calc.tipo
+    };
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        alert("¡Presupuesto guardado exitosamente!");
+        document.getElementById("nombre").value = "";
+        document.getElementById("extraDesc").value = "";
+        document.getElementById("extraCosto").value = "";
+        setTimeout(cargarDeSheets, 1200);
+    } catch(err) {
+        alert("Error al guardar: " + err);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Guardar en la Nube ☁️";
+    }
+}
+
+function obtenerValor(obj, listaNombres) {
+    if (!obj) return "";
+    for (let nombre of listaNombres) {
+        if (obj[nombre] !== undefined && obj[nombre] !== null && obj[nombre] !== "") {
+            return obj[nombre];
+        }
+    }
+    const clavesObj = Object.keys(obj);
+    for (let nombre of listaNombres) {
+        let limpioN = nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        let encon = clavesObj.find(k => k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === limpioN);
+        if (encon && obj[encon] !== undefined && obj[encon] !== null && obj[encon] !== "") {
+            return obj[encon];
+        }
+    }
+    return "";
+}
+
+async function cargarDeSheets() {
+    let status = document.getElementById("syncStatus");
+    status.innerHTML = `<span class="status-badge status-loading">Sincronizando...</span>`;
+
+    try {
+        let res = await fetch(SCRIPT_URL);
+        let resJson = await res.json();
+        
+        historialLocal = Array.isArray(resJson) ? resJson : (resJson.data || []);
+        
+        let html = "";
+        for(let i = historialLocal.length - 1; i >= 0; i--) {
+            let x = historialLocal[i];
+
+            let fFecha = fmtFecha(obtenerValor(x, ["FECHA"]));
+            let fNombre = obtenerValor(x, ["PROYECTO"]) || "Sin nombre";
+            let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "MATERIALES"]);
+            let fExtra = obtenerValor(x, ["MATERIAL_EXTRA", "INSUMO_EXTRA", "EXTRA"]) || "-";
+            let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "TIEMPO"]);
+            let fCant = obtenerValor(x, ["CANTIDAD"]) || 1;
+            
+            let fCostoU = obtenerValor(x, ["COSTO_UNITARIO"]) || "0";
+            let fCostoR = obtenerValor(x, ["COSTO_REAL"]) || "0";
+            let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "COTIZACION_TOTAL"]) || "0";
+
+            fCostoU = fmt(fCostoU);
+            fCostoR = fmt(fCostoR);
+            fPrecio = fmt(fPrecio);
+
+            html += `<tr>
+                <td>${fFecha}</td>
+                <td><strong>${fNombre}</strong></td>
+                <td>${fMaterial}</td>
+                <td>${fExtra}</td>
+                <td>${fTiempo}</td>
+                <td>${fCant} u.</td>
+                <td>${fCostoU}</td>
+                <td><span style="color:#94a3b8; font-weight:600;">${fCostoR}</span></td>
+                <td><span style="color:#10b981; font-weight:700;">${fPrecio}</span></td>
+                <td>
+                    <button class="btn-tbl btn-tbl-load" onclick="cargarProyecto(${i})">✏️ Cargar</button>
+                    <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto(${i})">🗑️ Borrar</button>
+                </td>
+            </tr>`;
+        }
+        document.getElementById("historial").innerHTML = html;
+        status.innerHTML = `<span class="status-badge status-success">Sincronizado</span>`;
+    } catch(err) {
+        status.innerHTML = `<span style="color:var(--danger); font-size:12px;">Error de conexión</span>`;
+    }
+}
+
+function cargarProyecto(index) {
+    let item = historialLocal[index];
+    if(!item) return;
+
+    let nombre = obtenerValor(item, ["PROYECTO"]);
+    let precioKg = obtenerValor(item, ["PRECIO_KG"]);
+    let peso = obtenerValor(item, ["PESO"]);
+    let horas = obtenerValor(item, ["HORAS"]);
+    let minutos = obtenerValor(item, ["MINUTOS"]);
+    let cantidad = obtenerValor(item, ["CANTIDAD"]) || 1;
+    let tipo = obtenerValor(item, ["TIPO"]) || "PLA";
+
+    let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "MATERIALES"]);
+    if(matStr && matStr.includes("(")) {
+        tipo = matStr.split("(")[0].trim();
+    }
+
+    document.getElementById("nombre").value = nombre;
+    if(precioKg) document.getElementById("precioKg").value = precioKg;
+    if(peso) document.getElementById("peso").value = peso;
+    if(horas) document.getElementById("horas").value = horas;
+    if(minutos) document.getElementById("minutos").value = minutos;
+    if(cantidad) document.getElementById("cantidad").value = cantidad;
+    
+    let selectTipo = document.getElementById("tipo");
+    for(let i = 0; i < selectTipo.options.length; i++) {
+        if(selectTipo.options[i].value.toLowerCase() === tipo.toLowerCase()) {
+            selectTipo.selectedIndex = i;
+            break;
+        }
+    }
+
+    calcular();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function eliminarProyecto(index) {
+    if(!confirm("¿Estás seguro de que querés borrar este registro del historial?")) return;
+
+    let status = document.getElementById("syncStatus");
+    status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
+
+    let realIndex = (historialLocal.length - 1) - index;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", rowIndex: realIndex })
+        });
+
+        alert("Registro eliminado correctamente.");
+        setTimeout(cargarDeSheets, 1200);
+    } catch(err) {
+        alert("Error al eliminar: " + err);
+    }
+}
+
+cargarConfigFija();
+cargarDeSheets();
+</script>
+</body>
+</html>
