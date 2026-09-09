@@ -1,492 +1,719 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Costos de Impresión 3D</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --bg: #f3f4f6;
-            --card-bg: #ffffff;
-            --text: #1f2937;
-            --border: #d1d5db;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b0f19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>RAFA 3D - Panel de Costos</title>
+<style>
+:root {
+    --bg-main: #0b0f19;
+    --bg-card: #131c2e;
+    --bg-input: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --success: #10b981;
+    --success-hover: #059669;
+    --accent: #06b6d4;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --warning: #f59e0b;
+    --border: rgba(255, 255, 255, 0.05);
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    margin: 0;
+    padding: 16px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+}
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+.container {
+    max-width: 1280px;
+    margin: auto;
+}
 
-        .main-container {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+.header {
+    background: linear-gradient(135deg, #1e40af, #0891b2);
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-        .card {
-            background-color: var(--card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        }
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
 
-        h1, h2 {
-            color: var(--primary);
-            margin-bottom: 16px;
-        }
+.header .version {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 4px;
+}
 
-        h1 {
-            text-align: center;
-            font-size: 1.8rem;
-        }
+.card {
+    background: var(--bg-card);
+    padding: 18px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+}
 
-        h2 {
-            font-size: 1.2rem;
-            border-bottom: 2px solid var(--bg);
-            padding-bottom: 8px;
-        }
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
+.grid-main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
 
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 4px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-size: 15px;
+}
 
-        label {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #374151;
-        }
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.95rem;
-        }
+.actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
 
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-        }
+button {
+    flex: 1 1 140px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        /* Insumos adicionales */
-        .insumo-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 8px;
-        }
+.btn-calc { background: var(--primary); color: white; }
+.btn-save { background: var(--success); color: white; }
+.btn-sync { background: var(--accent); color: white; }
 
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 0.95rem;
-        }
+.dashboard-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
 
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-            width: 100%;
-        }
+.kpi-box {
+    background: #142035;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
 
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
+.kpi-box .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
 
-        .btn-secondary {
-            background-color: #6b7280;
-            color: white;
-        }
+.kpi-box .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-top: 4px;
+}
 
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-            padding: 8px 12px;
-        }
+.kpi-box.final {
+    background: linear-gradient(145deg, #132d24, #0a1f18);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+.kpi-box.final .kpi-value { color: #10b981; font-size: 32px; }
 
-        .btn-danger:hover {
-            background-color: var(--danger-hover);
-        }
+.kpi-box.unit {
+    background: linear-gradient(145deg, #112936, #091a24);
+    border-color: rgba(6, 182, 212, 0.2);
+}
+.kpi-box.unit .kpi-value { color: var(--accent); }
 
-        /* Resultados */
-        .results-box {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-        }
+.breakdown-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    font-size: 13px;
+}
 
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 0.95rem;
-        }
+.breakdown-item {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 3px solid var(--text-muted);
+}
+.breakdown-item.mat { border-left-color: var(--primary); }
+.breakdown-item.desg { border-left-color: var(--warning); }
+.breakdown-item.nrg { border-left-color: var(--accent); }
 
-        .result-row.total {
-            border-top: 2px solid #93c5fd;
-            margin-top: 8px;
-            padding-top: 8px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
+.table-container {
+    overflow-x: auto;
+}
 
-        /* Tabla de Historial */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 12px;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.875rem;
-        }
+th {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    border-bottom: 2px solid var(--border);
+    text-align: left;
+}
 
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
-        }
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
 
-        th {
-            background-color: #f9fafb;
-            font-weight: 600;
-        }
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.status-loading { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.status-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 
-        .status-msg {
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 0.9rem;
-            margin-top: 12px;
-            display: none;
-        }
-
-        .status-success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-error {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-    </style>
+.btn-tbl {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+.btn-tbl-load { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+.btn-tbl-load:hover { background: var(--primary); color: white; }
+.btn-tbl-del { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.btn-tbl-del:hover { background: var(--danger); color: white; }
+</style>
 </head>
 <body>
 
-<div class="main-container">
-    
-    <div class="card">
-        <h1>Calculadora de Impresión 3D</h1>
-        
-        <form id="calcForm" onsubmit="return false;">
-            
-            <h2>1. Datos Generales del Trabajo</h2>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="nombrePieza">Nombre del Trabajo / Pieza</label>
-                    <input type="text" id="nombrePieza" placeholder="Ej. Soporte Auriculares v2" required>
-                </div>
-                <div class="form-group">
-                    <label for="tipoFilamento">Tipo de Filamento</label>
-                    <input type="text" id="tipoFilamento" placeholder="PLA, PETG, ABS..." value="PLA">
-                </div>
-            </div>
-
-            <h2>2. Material y Tiempo</h2>
-            <div class="grid-3">
-                <div class="form-group">
-                    <label for="pesoGramos">Peso Impresión (g)</label>
-                    <input type="number" id="pesoGramos" step="0.1" placeholder="85" required>
-                </div>
-                <div class="form-group">
-                    <label for="costoKilo">Costo Filamento ($/kg)</label>
-                    <input type="number" id="costoKilo" step="0.01" value="22000" required>
-                </div>
-                <div class="form-group">
-                    <label for="tiempoHoras">Tiempo Impresión (hs)</label>
-                    <input type="number" id="tiempoHoras" step="0.1" placeholder="4.5" required>
-                </div>
-            </div>
-
-            <h2>3. Consumo, Desgaste y Parámetros</h2>
-            <div class="grid-3">
-                <div class="form-group">
-                    <label for="consumoW">Consumo Impresora (W)</label>
-                    <input type="number" id="consumoW" value="150" required>
-                </div>
-                <div class="form-group">
-                    <label for="costoKwh">Costo Energía ($/kWh)</label>
-                    <input type="number" id="costoKwh" step="0.01" value="120" required>
-                </div>
-                <div class="form-group">
-                    <label for="depreciacionHora">Desgaste/Máquina ($/h)</label>
-                    <input type="number" id="depreciacionHora" step="0.01" value="180" required>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="margenGanancia">Margen de Ganancia (%)</label>
-                    <input type="number" id="margenGanancia" value="100" required>
-                </div>
-                <div class="form-group">
-                    <label for="fallaPorcentaje">Margen por Falla / Riesgo (%)</label>
-                    <input type="number" id="fallaPorcentaje" value="10" required>
-                </div>
-            </div>
-
-            <h2>4. Insumos Adicionales (Tornillos, Embalaje, Post-procesado)</h2>
-            <div id="insumosContainer">
-                <!-- Se agregan dinámicamente -->
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="agregarInsumo()" style="margin-bottom: 16px;">+ Agregar Insumo Extra</button>
-
-            <button type="button" class="btn btn-primary" onclick="calcularYGuardar()">Calcular y Registrar Cotización</button>
-        </form>
-
-        <div class="results-box">
-            <div class="result-row">
-                <span>Costo Filamento:</span>
-                <span id="resMaterial">$0,00</span>
-            </div>
-            <div class="result-row">
-                <span>Costo Energía:</span>
-                <span id="resEnergia">$0,00</span>
-            </div>
-            <div class="result-row">
-                <span>Costo Desgaste Máquina:</span>
-                <span id="resDepreciacion">$0,00</span>
-            </div>
-            <div class="result-row">
-                <span>Total Insumos Extra:</span>
-                <span id="resInsumos">$0,00</span>
-            </div>
-            <div class="result-row">
-                <span>Costo Base Total (con margen de falla):</span>
-                <span id="resCostoBase">$0,00</span>
-            </div>
-            <div class="result-row total">
-                <span>Precio de Venta Sugerido:</span>
-                <span id="resPrecioVenta">$0,00</span>
-            </div>
-        </div>
-
-        <div id="statusBox" class="status-msg"></div>
+<div class="container">
+    <div class="header">
+        <h1>RAFA 3D</h1>
+        <div class="version">Cloud App — Sincronizado con Google Sheets</div>
     </div>
 
-    <!-- Historial de Trabajos -->
     <div class="card">
-        <h2>Historial de Cotizaciones Guardadas</h2>
+        <label style="margin-top: 0;">Identificación del Proyecto / Cliente</label>
+        <input id="nombre" placeholder="Ej: Maceta Groot - Cliente S.A.">
+    </div>
+
+    <div class="grid-main">
+        <div class="card">
+            <h3>1. Análisis de Material</h3>
+            <label>Tipo de filamento</label>
+            <select id="tipo">
+                <option>PLA</option>
+                <option>PETG</option>
+                <option>ASA</option>
+                <option>ABS</option>
+                <option>TPU</option>
+                <option>Nylon</option>
+                <option>Otro</option>
+            </select>
+
+            <label>Precio por Kilograma ($)</label>
+            <input id="precioKg" type="number" placeholder="Ej: 25000">
+
+            <label>Peso unitario de la pieza (g)</label>
+            <input id="peso" type="number" placeholder="Ej: 350">
+
+            <label>Margen de desperdicio (%)</label>
+            <input id="desperdicio" type="number" value="5">
+        </div>
+
+        <div class="card">
+            <h3>2. Tiempos y Logística</h3>
+            <label>Horas de impresión</label>
+            <input id="horas" type="number" placeholder="0">
+
+            <label>Minutos de impresión</label>
+            <input id="minutos" type="number" placeholder="0">
+
+            <label>Volumen de piezas (Cantidad)</label>
+            <input id="cantidad" type="number" value="1">
+        </div>
+
+        <div class="card">
+            <h3>3. Amortización de Máquina</h3>
+            <label>Valor de reposición del equipo ($)</label>
+            <input id="valorImp" type="number" placeholder="Ej: 850000" onchange="guardarConfigFija()">
+
+            <label>Vida útil nominal (horas)</label>
+            <input id="vidaUtil" type="number" value="10000" onchange="guardarConfigFija()">
+        </div>
+
+        <div class="card">
+            <h3>4. Costo Energético</h3>
+            <label>Consumo promedio estimado (W)</label>
+            <input id="consumo" type="number" value="100" onchange="guardarConfigFija()">
+
+            <label>Tarifa eléctrica por kWh ($)</label>
+            <input id="kwh" type="number" placeholder="Ej: 120" onchange="guardarConfigFija()">
+        </div>
+
+        <div class="card">
+            <h3>5. Gestión de Riesgos</h3>
+            <label>Factor de Falla Tolerar</label>
+            <select id="falla">
+                <option value="0">Sin riesgo (0%)</option>
+                <option value="2">Bajo riesgo (2%)</option>
+                <option value="5" selected>Tasa Normal (5%)</option>
+                <option value="10">Riesgo Alto (10%)</option>
+                <option value="15">Complejo / Crítico (15%)</option>
+                <option value="25">Diseño Experimental (25%)</option>
+                <option value="50">Máximo Extremo (50%)</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>6. Margen Comercial</h3>
+            <label>Rendimiento / Ganancia</label>
+            <select id="beneficio">
+                <option value="20">Margen Base (20%)</option>
+                <option value="50">Económico (50%)</option>
+                <option value="100" selected>Estándar (100%)</option>
+                <option value="200">Alta Demanda (200%)</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>7. Insumos y Extras</h3>
+            <label>Descripción del insumo extra</label>
+            <input id="extraDesc" type="text" placeholder="Ej: Kit velador, cable y portalámparas">
+
+            <label>Costo del insumo extra unitario ($)</label>
+            <input id="extraCosto" type="number" placeholder="Ej: 3500">
+        </div>
+    </div>
+
+    <div class="actions-bar">
+        <button class="btn-calc" onclick="calcular()">Calcular Costos</button>
+        <button class="btn-save" id="btnGuardar" onclick="guardarEnSheets()">Guardar en la Nube ☁️</button>
+        <button class="btn-sync" onclick="cargarDeSheets()">Actualizar Historial 🔄</button>
+    </div>
+
+    <div class="dashboard-results">
+        <div class="kpi-box">
+            <div class="kpi-label">Costo Operativo Real</div>
+            <div class="kpi-value" id="costoReal" style="color: var(--text-main);">$0</div>
+        </div>
+        <div class="kpi-box final">
+            <div class="kpi-label">Precio de Venta Sugerido</div>
+            <div class="kpi-value" id="precioFinal">$0</div>
+        </div>
+        <div class="kpi-box unit" id="boxUnitario" style="display: none;">
+            <div class="kpi-label">Costo Neto por Unidad</div>
+            <div class="kpi-value" id="costoUnitario">$0</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Desglose técnico del presupuesto</h3>
+        <div class="breakdown-list" id="detalle">
+            <div style="color: var(--text-muted); font-style: italic;">Presioná "Calcular Costos" para ver el análisis detallado.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Historial Registrado <span id="syncStatus"></span></h3>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Nombre</th>
-                        <th>Peso (g)</th>
-                        <th>Tiempo (h)</th>
-                        <th>Costo Base</th>
-                        <th>Precio Venta</th>
-                        <th>Acción</th>
+                        <th>FECHA</th>
+                        <th>PROYECTO</th>
+                        <th>FILAMENTO</th>
+                        <th>INSUMO EXTRA</th>
+                        <th>TIEMPO</th>
+                        <th>CANT.</th>
+                        <th>COSTO UNIT.</th>
+                        <th>COSTO REAL</th>
+                        <th>COTIZACIÓN TOTAL</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
-                <tbody id="tablaHistorial">
-                    <!-- Se cargan dinámicamente -->
-                </tbody>
+                <tbody id="historial"></tbody>
             </table>
         </div>
     </div>
-
 </div>
 
 <script>
-    // URL de tu Web App desplegada en Google Apps Script
-    var APPS_SCRIPT_URL = "";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3zLHzijNhxy_QKKCKam_B4Kuk-_PCeP0YxwMXpcax-1ghs4PiQ/exec";
 
-    var historialCalculos = [];
+let historialLocal = [];
 
-    function formatearMoneda(valor) {
-        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(valor);
+function fmt(v){
+    if (v === null || v === undefined || v === "") return "$0";
+    if (typeof v === "string") {
+        let limpio = v.trim();
+        if (limpio.startsWith("$")) return limpio;
+        limpio = limpio.replace(/[^0-9.,-]/g, '');
+        let num = parseFloat(limpio.replace(',', '.'));
+        if (!isNaN(num)) {
+            return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+    let num = Number(v);
+    if (isNaN(num)) return "$0";
+    return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtFecha(strFecha) {
+    if (!strFecha) return "";
+    let s = String(strFecha).trim();
+    if (s.includes("T")) s = s.split("T")[0];
+    if (s.includes("-")) {
+        let partes = s.split("-");
+        if (partes.length === 3 && partes[0].length === 4) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+    return s;
+}
+
+function guardarConfigFija() {
+    const config = {
+        valorImp: document.getElementById("valorImp").value,
+        vidaUtil: document.getElementById("vidaUtil").value,
+        consumo: document.getElementById("consumo").value,
+        kwh: document.getElementById("kwh").value
+    };
+    localStorage.setItem("rafa3d_config", JSON.stringify(config));
+}
+
+function cargarConfigFija() {
+    const config = JSON.parse(localStorage.getItem("rafa3d_config"));
+    if(config) {
+        if(config.valorImp) document.getElementById("valorImp").value = config.valorImp;
+        if(config.vidaUtil) document.getElementById("vidaUtil").value = config.vidaUtil;
+        if(config.consumo) document.getElementById("consumo").value = config.consumo;
+        if(config.kwh) document.getElementById("kwh").value = config.kwh;
+    }
+}
+
+function calcular() {
+    let precioKg = Number(document.getElementById("precioKg").value) || 0;
+    let peso = Number(document.getElementById("peso").value) || 0;
+    let desp = Number(document.getElementById("desperdicio").value) || 0;
+    let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
+    let cantidad = Number(document.getElementById("cantidad").value) || 1;
+
+    let extraDesc = document.getElementById("extraDesc").value.trim();
+    let extraCostoUnitario = Number(document.getElementById("extraCosto").value) || 0;
+    let extraCostoTotal = extraCostoUnitario * cantidad;
+
+    let pesoTotal = peso * cantidad;
+    let horasTotales = horasUnitarias * cantidad;
+
+    let material = (precioKg / 1000) * pesoTotal;
+    let desperdicio = material * (desp / 100);
+    let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
+    let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
+
+    let subtotal = material + desperdicio + desgaste + energia + extraCostoTotal;
+    
+    let falla = Number(document.getElementById("falla").value) || 0;
+    let corregido = subtotal * (1 + falla / 100);
+    let beneficio = Number(document.getElementById("beneficio").value) || 0;
+
+    let precio = corregido * (1 + beneficio / 100);
+
+    document.getElementById("costoReal").innerHTML = fmt(corregido);
+    document.getElementById("precioFinal").innerHTML = fmt(precio);
+
+    const boxUnitario = document.getElementById("boxUnitario");
+    if (cantidad > 1) {
+        boxUnitario.style.display = "block";
+        document.getElementById("costoUnitario").innerHTML = fmt(corregido / cantidad);
+    } else {
+        boxUnitario.style.display = "none";
     }
 
-    function agregarInsumo(nombre = "", cantidad = 1, costoUni = 0) {
-        var container = document.getElementById('insumosContainer');
-        var div = document.createElement('div');
-        div.className = 'insumo-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Concepto (ej. Tornillo M3)" value="${nombre}" class="insumo-nombre">
-            <input type="number" placeholder="Cant." value="${cantidad}" step="1" class="insumo-cant">
-            <input type="number" placeholder="$/Unid." value="${costoUni}" step="0.01" class="insumo-precio">
-            <button type="button" class="btn btn-danger" onclick="eliminarInsumo(this)">X</button>
-        `;
-        container.appendChild(div);
+    let htmlDetalle = `
+        <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
+        <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
+        <div class="breakdown-item mat"><span>Desperdicio (${desp}%):</span> <strong>${fmt(desperdicio)}</strong></div>
+        <div class="breakdown-item desg"><span>Desgaste Impresora:</span> <strong>${fmt(desgaste)} (${horasTotales.toFixed(1)} hs)</strong></div>
+        <div class="breakdown-item nrg"><span>Consumo de Red:</span> <strong>${fmt(energia)}</strong></div>
+    `;
+
+    if (extraCostoTotal > 0) {
+        htmlDetalle += `<div class="breakdown-item" style="border-left-color: #8b5cf6;"><span>Extra (${extraDesc || 'Sin nombre'}):</span> <strong>${fmt(extraCostoTotal)}</strong></div>`;
     }
 
-    function eliminarInsumo(btn) {
-        btn.parentElement.remove();
-    }
+    htmlDetalle += `
+        <div class="breakdown-item"><span>Margen de Falla (${falla}%):</span> <strong>+ ${fmt(corregido - subtotal)}</strong></div>
+        <div class="breakdown-item" style="border-left-color: var(--success)"><span>Retorno (${beneficio}%):</span> <strong>+ ${fmt(precio - corregido)}</strong></div>
+    `;
 
-    function obtenerCostoInsumos() {
-        var nombres = document.querySelectorAll('.insumo-nombre');
-        var cantidades = document.querySelectorAll('.insumo-cant');
-        var precios = document.querySelectorAll('.insumo-precio');
+    document.getElementById("detalle").innerHTML = htmlDetalle;
+    
+    return {
+        costo: corregido,
+        precio: precio,
+        costoUnitario: corregido / cantidad,
+        cantidad: cantidad,
+        beneficio: beneficio,
+        precioKg: precioKg,
+        peso: peso,
+        horas: document.getElementById("horas").value,
+        minutos: document.getElementById("minutos").value,
+        tipo: document.getElementById("tipo").value,
+        extraDesc: extraDesc,
+        extraCostoUnitario: extraCostoUnitario
+    };
+}
+
+async function guardarEnSheets() {
+    let calc = calcular();
+    let btn = document.getElementById("btnGuardar");
+    btn.disabled = true;
+    btn.innerText = "Guardando... ⏳";
+
+    let matResumen = calc.tipo + " (" + (calc.peso || "0") + "g)";
+    let extraResumen = calc.extraCostoUnitario > 0 ? (calc.extraDesc || "Extra") + " (" + fmt(calc.extraCostoUnitario) + ")" : "-";
+
+    let hoy = new Date();
+    let dia = String(hoy.getDate()).padStart(2, '0');
+    let mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    let anio = hoy.getFullYear();
+    let fechaLimpia = `${dia}/${mes}/${anio}`;
+
+    let payload = {
+        action: "save",
+        fecha: fechaLimpia,
+        nombre: document.getElementById("nombre").value || "Sin nombre",
+        materialStr: matResumen,
+        extraStr: extraResumen,
+        tiempoStr: (calc.horas || "0") + "h " + (calc.minutos || "0") + "m",
+        cantidad: calc.cantidad,
+        costoUnitario: fmt(calc.costoUnitario),
+        costoReal: fmt(calc.costo),
+        precio: fmt(calc.precio),
+        beneficio: calc.beneficio,
+        precioKg: calc.precioKg,
+        peso: calc.peso,
+        horas: calc.horas,
+        minutos: calc.minutos,
+        tipo: calc.tipo
+    };
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        alert("¡Presupuesto guardado exitosamente!");
+        document.getElementById("nombre").value = "";
+        document.getElementById("extraDesc").value = "";
+        document.getElementById("extraCosto").value = "";
+        setTimeout(cargarDeSheets, 1200);
+    } catch(err) {
+        alert("Error al guardar: " + err);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Guardar en la Nube ☁️";
+    }
+}
+
+function obtenerValor(obj, listaNombres) {
+    if (!obj) return "";
+    for (let nombre of listaNombres) {
+        if (obj[nombre] !== undefined && obj[nombre] !== null && obj[nombre] !== "") {
+            return obj[nombre];
+        }
+    }
+    const clavesObj = Object.keys(obj);
+    for (let nombre of listaNombres) {
+        let limpioN = nombre.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        let encon = clavesObj.find(k => k.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === limpioN);
+        if (encon && obj[encon] !== undefined && obj[encon] !== null && obj[encon] !== "") {
+            return obj[encon];
+        }
+    }
+    return "";
+}
+
+async function cargarDeSheets() {
+    let status = document.getElementById("syncStatus");
+    status.innerHTML = `<span class="status-badge status-loading">Sincronizando...</span>`;
+
+    try {
+        let res = await fetch(SCRIPT_URL);
+        historialLocal = await res.json();
         
-        var total = 0;
-        for (var i = 0; i < nombres.length; i++) {
-            var cant = parseFloat(cantidades[i].value) || 0;
-            var prec = parseFloat(precios[i].value) || 0;
-            total += cant * prec;
+        let html = "";
+        for(let i = historialLocal.length - 1; i >= 0; i--) {
+            let x = historialLocal[i];
+
+            let fFecha = fmtFecha(obtenerValor(x, ["FECHA"]));
+            let fNombre = obtenerValor(x, ["PROYECTO"]) || "Sin nombre";
+            let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "MATERIALES"]);
+            let fExtra = obtenerValor(x, ["INSUMO_EXTRA", "EXTRA"]) || "-";
+            let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "TIEMPO"]);
+            let fCant = obtenerValor(x, ["CANTIDAD"]) || 1;
+            
+            let fCostoU = obtenerValor(x, ["COSTO_UNITARIO"]) || "0";
+            let fCostoR = obtenerValor(x, ["COSTO_REAL"]) || "0";
+            let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "COTIZACION_TOTAL"]) || "0";
+
+            fCostoU = fmt(fCostoU);
+            fCostoR = fmt(fCostoR);
+            fPrecio = fmt(fPrecio);
+
+            html += `<tr>
+                <td>${fFecha}</td>
+                <td><strong>${fNombre}</strong></td>
+                <td>${fMaterial}</td>
+                <td>${fExtra}</td>
+                <td>${fTiempo}</td>
+                <td>${fCant} u.</td>
+                <td>${fCostoU}</td>
+                <td><span style="color:#94a3b8; font-weight:600;">${fCostoR}</span></td>
+                <td><span style="color:#10b981; font-weight:700;">${fPrecio}</span></td>
+                <td>
+                    <button class="btn-tbl btn-tbl-load" onclick="cargarProyecto(${i})">✏️ Cargar</button>
+                    <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto(${i})">🗑️ Borrar</button>
+                </td>
+            </tr>`;
         }
-        return total;
+        document.getElementById("historial").innerHTML = html;
+        status.innerHTML = `<span class="status-badge status-success">Sincronizado</span>`;
+    } catch(err) {
+        status.innerHTML = `<span style="color:var(--danger); font-size:12px;">Error de conexión</span>`;
+    }
+}
+
+function cargarProyecto(index) {
+    let item = historialLocal[index];
+    if(!item) return;
+
+    let nombre = obtenerValor(item, ["PROYECTO"]);
+    let precioKg = obtenerValor(item, ["PRECIO_KG"]);
+    let peso = obtenerValor(item, ["PESO"]);
+    let horas = obtenerValor(item, ["HORAS"]);
+    let minutos = obtenerValor(item, ["MINUTOS"]);
+    let cantidad = obtenerValor(item, ["CANTIDAD"]) || 1;
+    let tipo = obtenerValor(item, ["TIPO"]) || "PLA";
+
+    let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "MATERIALES"]);
+    if(matStr && matStr.includes("(")) {
+        tipo = matStr.split("(")[0].trim();
     }
 
-    function mostrarEstado(mensaje, esExito) {
-        var box = document.getElementById('statusBox');
-        box.innerText = mensaje;
-        box.className = "status-msg " + (esExito ? "status-success" : "status-error");
-        box.style.display = "block";
-    }
-
-    function calcularYGuardar() {
-        var nombre = document.getElementById('nombrePieza').value;
-        var peso = parseFloat(document.getElementById('pesoGramos').value) || 0;
-        var costoKilo = parseFloat(document.getElementById('costoKilo').value) || 0;
-        var tiempo = parseFloat(document.getElementById('tiempoHoras').value) || 0;
-        var consumoW = parseFloat(document.getElementById('consumoW').value) || 0;
-        var costoKwh = parseFloat(document.getElementById('costoKwh').value) || 0;
-        var depreciacion = parseFloat(document.getElementById('depreciacionHora').value) || 0;
-        var margen = parseFloat(document.getElementById('margenGanancia').value) || 0;
-        var falla = parseFloat(document.getElementById('fallaPorcentaje').value) || 0;
-
-        if (!nombre || peso <= 0 || tiempo <= 0) {
-            mostrarEstado("Por favor, completa el nombre, peso y tiempo válidos.", false);
-            return;
-        }
-
-        // Cálculos
-        var costoMaterial = (peso / 1000) * costoKilo;
-        var costoEnergia = (tiempo * (consumoW / 1000)) * costoKwh;
-        var costoDesgaste = tiempo * depreciacion;
-        var costoInsumosExtra = obtenerCostoInsumos();
-
-        var costoSubtotal = costoMaterial + costoEnergia + costoDesgaste + costoInsumosExtra;
-        var costoBaseTotal = costoSubtotal + (costoSubtotal * (falla / 100));
-
-        var precioVenta = costoBaseTotal * (1 + (margen / 100));
-
-        // Renderizar Resultados
-        document.getElementById('resMaterial').innerText = formatearMoneda(costoMaterial);
-        document.getElementById('resEnergia').innerText = formatearMoneda(costoEnergia);
-        document.getElementById('resDepreciacion').innerText = formatearMoneda(costoDesgaste);
-        document.getElementById('resInsumos').innerText = formatearMoneda(costoInsumosExtra);
-        document.getElementById('resCostoBase').innerText = formatearMoneda(costoBaseTotal);
-        document.getElementById('resPrecioVenta').innerText = formatearMoneda(precioVenta);
-
-        // Guardar Registro Localmente
-        var registro = {
-            id: Date.now(),
-            fecha: new Date().toLocaleString('es-AR'),
-            nombre: nombre,
-            peso: peso,
-            tiempo: tiempo,
-            costoBase: costoBaseTotal,
-            precioVenta: precioVenta
-        };
-
-        historialCalculos.unshift(registro);
-        actualizarTablaHistorial();
-
-        // Guardar en Google Sheets
-        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.trim() !== "") {
-            mostrarEstado("Enviando cotización a Google Sheets...", true);
-
-            fetch(APPS_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(registro)
-            })
-            .then(function() {
-                mostrarEstado("¡Cotización calculada y registrada exitosamente en Google Sheets!", true);
-            })
-            .catch(function(err) {
-                console.error(err);
-                mostrarEstado("Calculado con éxito, pero hubo un error de conexión con Google Sheets.", false);
-            });
-        } else {
-            mostrarEstado("Cotización calculada y añadida al historial local.", true);
+    document.getElementById("nombre").value = nombre;
+    if(precioKg) document.getElementById("precioKg").value = precioKg;
+    if(peso) document.getElementById("peso").value = peso;
+    if(horas) document.getElementById("horas").value = horas;
+    if(minutos) document.getElementById("minutos").value = minutos;
+    if(cantidad) document.getElementById("cantidad").value = cantidad;
+    
+    let selectTipo = document.getElementById("tipo");
+    for(let i = 0; i < selectTipo.options.length; i++) {
+        if(selectTipo.options[i].value.toLowerCase() === tipo.toLowerCase()) {
+            selectTipo.selectedIndex = i;
+            break;
         }
     }
 
-    function actualizarTablaHistorial() {
-        var tbody = document.getElementById('tablaHistorial');
-        tbody.innerHTML = "";
+    calcular();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-        historialCalculos.forEach(function(item) {
-            var tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${item.fecha}</td>
-                <td><strong>${item.nombre}</strong></td>
-                <td>${item.peso} g</td>
-                <td>${item.tiempo} hs</td>
-                <td>${formatearMoneda(item.costoBase)}</td>
-                <td><strong>${formatearMoneda(item.precioVenta)}</strong></td>
-                <td><button class="btn btn-danger" onclick="borrarRegistro(${item.id})">Borrar</button></td>
-            `;
-            tbody.appendChild(tr);
+async function eliminarProyecto(index) {
+    if(!confirm("¿Estás seguro de que querés borrar este registro del historial?")) return;
+
+    let status = document.getElementById("syncStatus");
+    status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
+
+    let realIndex = (historialLocal.length - 1) - index;
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", rowIndex: realIndex })
         });
-    }
 
-    function borrarRegistro(id) {
-        historialCalculos = historialCalculos.filter(function(item) {
-            return item.id !== id;
-        });
-        actualizarTablaHistorial();
+        alert("Registro eliminado correctamente.");
+        setTimeout(cargarDeSheets, 1200);
+    } catch(err) {
+        alert("Error al eliminar: " + err);
     }
+}
+
+cargarConfigFija();
+cargarDeSheets();
 </script>
-
 </body>
 </html>
