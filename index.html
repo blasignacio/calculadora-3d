@@ -340,15 +340,6 @@ td {
                 <option value="200">Alta Demanda (200%)</option>
             </select>
         </div>
-
-        <div class="card">
-            <h3>7. Insumos y Extras</h3>
-            <label>Descripción del insumo extra</label>
-            <input id="extraDesc" type="text" placeholder="Ej: Kit velador, cable y portalámparas">
-
-            <label>Costo del insumo extra unitario ($)</label>
-            <input id="extraCosto" type="number" placeholder="Ej: 3500">
-        </div>
     </div>
 
     <div class="actions-bar">
@@ -386,9 +377,8 @@ td {
                 <thead>
                     <tr>
                         <th>FECHA</th>
-                        <th>PROYECTO</th>
-                        <th>FILAMENTO</th>
-                        <th>INSUMO EXTRA</th>
+                        <th>PROYECTO / CLIENTE</th>
+                        <th>MATERIALES</th>
                         <th>TIEMPO</th>
                         <th>CANT.</th>
                         <th>COSTO UNIT.</th>
@@ -408,33 +398,25 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 
 let historialLocal = [];
 
+// Formateador de moneda corregido para evitar confusiones entre comas y puntos
 function fmt(v){
     if (v === null || v === undefined || v === "") return "$0";
+    
+    // Si ya viene formateado como String desde la hoja (ej: "$17.17" o "$ 8.58")
     if (typeof v === "string") {
         let limpio = v.trim();
         if (limpio.startsWith("$")) return limpio;
+        // Limpiamos espacios y caracteres no numéricos excepto puntos/comas
         limpio = limpio.replace(/[^0-9.,-]/g, '');
         let num = parseFloat(limpio.replace(',', '.'));
         if (!isNaN(num)) {
             return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     }
+    
     let num = Number(v);
     if (isNaN(num)) return "$0";
     return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function fmtFecha(strFecha) {
-    if (!strFecha) return "";
-    let s = String(strFecha).trim();
-    if (s.includes("T")) s = s.split("T")[0];
-    if (s.includes("-")) {
-        let partes = s.split("-");
-        if (partes.length === 3 && partes[0].length === 4) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-    }
-    return s;
 }
 
 function guardarConfigFija() {
@@ -464,10 +446,6 @@ function calcular() {
     let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
     let cantidad = Number(document.getElementById("cantidad").value) || 1;
 
-    let extraDesc = document.getElementById("extraDesc").value.trim();
-    let extraCostoUnitario = Number(document.getElementById("extraCosto").value) || 0;
-    let extraCostoTotal = extraCostoUnitario * cantidad;
-
     let pesoTotal = peso * cantidad;
     let horasTotales = horasUnitarias * cantidad;
 
@@ -476,8 +454,7 @@ function calcular() {
     let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
     let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
 
-    let subtotal = material + desperdicio + desgaste + energia + extraCostoTotal;
-    
+    let subtotal = material + desperdicio + desgaste + energia;
     let falla = Number(document.getElementById("falla").value) || 0;
     let corregido = subtotal * (1 + falla / 100);
     let beneficio = Number(document.getElementById("beneficio").value) || 0;
@@ -495,24 +472,15 @@ function calcular() {
         boxUnitario.style.display = "none";
     }
 
-    let htmlDetalle = `
+    document.getElementById("detalle").innerHTML = `
         <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
         <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
         <div class="breakdown-item mat"><span>Desperdicio (${desp}%):</span> <strong>${fmt(desperdicio)}</strong></div>
         <div class="breakdown-item desg"><span>Desgaste Impresora:</span> <strong>${fmt(desgaste)} (${horasTotales.toFixed(1)} hs)</strong></div>
         <div class="breakdown-item nrg"><span>Consumo de Red:</span> <strong>${fmt(energia)}</strong></div>
-    `;
-
-    if (extraCostoTotal > 0) {
-        htmlDetalle += `<div class="breakdown-item" style="border-left-color: #8b5cf6;"><span>Extra (${extraDesc || 'Sin nombre'}):</span> <strong>${fmt(extraCostoTotal)}</strong></div>`;
-    }
-
-    htmlDetalle += `
         <div class="breakdown-item"><span>Margen de Falla (${falla}%):</span> <strong>+ ${fmt(corregido - subtotal)}</strong></div>
         <div class="breakdown-item" style="border-left-color: var(--success)"><span>Retorno (${beneficio}%):</span> <strong>+ ${fmt(precio - corregido)}</strong></div>
     `;
-
-    document.getElementById("detalle").innerHTML = htmlDetalle;
     
     return {
         costo: corregido,
@@ -524,9 +492,7 @@ function calcular() {
         peso: peso,
         horas: document.getElementById("horas").value,
         minutos: document.getElementById("minutos").value,
-        tipo: document.getElementById("tipo").value,
-        extraDesc: extraDesc,
-        extraCostoUnitario: extraCostoUnitario
+        tipo: document.getElementById("tipo").value
     };
 }
 
@@ -536,22 +502,12 @@ async function guardarEnSheets() {
     btn.disabled = true;
     btn.innerText = "Guardando... ⏳";
 
-    let matResumen = calc.tipo + " (" + (calc.peso || "0") + "g)";
-    let extraResumen = calc.extraCostoUnitario > 0 ? (calc.extraDesc || "Extra") + " (" + fmt(calc.extraCostoUnitario) + ")" : "-";
-
-    let hoy = new Date();
-    let dia = String(hoy.getDate()).padStart(2, '0');
-    let mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    let anio = hoy.getFullYear();
-    let fechaLimpia = `${dia}/${mes}/${anio}`;
-
     let payload = {
         action: "save",
-        fecha: fechaLimpia,
+        fecha: new Date().toLocaleDateString("es-AR"),
         nombre: document.getElementById("nombre").value || "Sin nombre",
-        materialStr: matResumen,
-        extraStr: extraResumen,
-        tiempoStr: (calc.horas || "0") + "h " + (calc.minutos || "0") + "m",
+        materialStr: document.getElementById("tipo").value + " (" + (document.getElementById("peso").value || "0") + "g)",
+        tiempoStr: (document.getElementById("horas").value || "0") + "h " + (document.getElementById("minutos").value || "0") + "m",
         cantidad: calc.cantidad,
         costoUnitario: fmt(calc.costoUnitario),
         costoReal: fmt(calc.costo),
@@ -574,8 +530,6 @@ async function guardarEnSheets() {
 
         alert("¡Presupuesto guardado exitosamente!");
         document.getElementById("nombre").value = "";
-        document.getElementById("extraDesc").value = "";
-        document.getElementById("extraCosto").value = "";
         setTimeout(cargarDeSheets, 1200);
     } catch(err) {
         alert("Error al guardar: " + err);
@@ -615,16 +569,15 @@ async function cargarDeSheets() {
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
 
-            let fFecha = fmtFecha(obtenerValor(x, ["FECHA"]));
-            let fNombre = obtenerValor(x, ["PROYECTO"]) || "Sin nombre";
-            let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "MATERIALES"]);
-            let fExtra = obtenerValor(x, ["INSUMO_EXTRA", "EXTRA"]) || "-";
-            let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "TIEMPO"]);
-            let fCant = obtenerValor(x, ["CANTIDAD"]) || 1;
+            let fFecha = obtenerValor(x, ["FECHA", "fecha"]);
+            let fNombre = obtenerValor(x, ["PROYECTO", "nombre"]) || "Sin nombre";
+            let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "materialStr"]);
+            let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "tiempoStr"]);
+            let fCant = obtenerValor(x, ["CANTIDAD", "cantidad"]) || 1;
             
-            let fCostoU = obtenerValor(x, ["COSTO_UNITARIO"]) || "0";
-            let fCostoR = obtenerValor(x, ["COSTO_REAL"]) || "0";
-            let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "COTIZACION_TOTAL"]) || "0";
+            let fCostoU = obtenerValor(x, ["COSTO_UNITARIO", "costoUnitario"]) || "0";
+            let fCostoR = obtenerValor(x, ["COSTO_REAL", "COSTO _REAL", "costoReal"]) || "0";
+            let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "precio"]) || "0";
 
             fCostoU = fmt(fCostoU);
             fCostoR = fmt(fCostoR);
@@ -634,7 +587,6 @@ async function cargarDeSheets() {
                 <td>${fFecha}</td>
                 <td><strong>${fNombre}</strong></td>
                 <td>${fMaterial}</td>
-                <td>${fExtra}</td>
                 <td>${fTiempo}</td>
                 <td>${fCant} u.</td>
                 <td>${fCostoU}</td>
@@ -657,15 +609,15 @@ function cargarProyecto(index) {
     let item = historialLocal[index];
     if(!item) return;
 
-    let nombre = obtenerValor(item, ["PROYECTO"]);
-    let precioKg = obtenerValor(item, ["PRECIO_KG"]);
-    let peso = obtenerValor(item, ["PESO"]);
-    let horas = obtenerValor(item, ["HORAS"]);
-    let minutos = obtenerValor(item, ["MINUTOS"]);
-    let cantidad = obtenerValor(item, ["CANTIDAD"]) || 1;
-    let tipo = obtenerValor(item, ["TIPO"]) || "PLA";
+    let nombre = obtenerValor(item, ["PROYECTO", "nombre"]);
+    let precioKg = obtenerValor(item, ["PRECIO_KG", "precioKg"]);
+    let peso = obtenerValor(item, ["PESO", "peso"]);
+    let horas = obtenerValor(item, ["HORAS", "horas"]);
+    let minutos = obtenerValor(item, ["MINUTOS", "minutos"]);
+    let cantidad = obtenerValor(item, ["CANTIDAD", "cantidad"]) || 1;
+    let tipo = obtenerValor(item, ["TIPO", "tipo"]) || "PLA";
 
-    let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "MATERIALES"]);
+    let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "materialStr"]);
     if(matStr && matStr.includes("(")) {
         tipo = matStr.split("(")[0].trim();
     }
