@@ -340,6 +340,15 @@ td {
                 <option value="200">Alta Demanda (200%)</option>
             </select>
         </div>
+
+        <div class="card">
+            <h3>7. Insumos y Extras</h3>
+            <label>Descripción del insumo extra</label>
+            <input id="extraDesc" type="text" placeholder="Ej: Kit velador, cable y portalámparas">
+
+            <label>Costo del insumo extra unitario ($)</label>
+            <input id="extraCosto" type="number" placeholder="Ej: 3500">
+        </div>
     </div>
 
     <div class="actions-bar">
@@ -398,15 +407,13 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 
 let historialLocal = [];
 
-// Formateador de moneda corregido para evitar confusiones entre comas y puntos
+// Formateador de moneda corregido
 function fmt(v){
     if (v === null || v === undefined || v === "") return "$0";
     
-    // Si ya viene formateado como String desde la hoja (ej: "$17.17" o "$ 8.58")
     if (typeof v === "string") {
         let limpio = v.trim();
         if (limpio.startsWith("$")) return limpio;
-        // Limpiamos espacios y caracteres no numéricos excepto puntos/comas
         limpio = limpio.replace(/[^0-9.,-]/g, '');
         let num = parseFloat(limpio.replace(',', '.'));
         if (!isNaN(num)) {
@@ -446,6 +453,11 @@ function calcular() {
     let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
     let cantidad = Number(document.getElementById("cantidad").value) || 1;
 
+    // Campos del insumo extra
+    let extraDesc = document.getElementById("extraDesc").value.trim() || "Insumo Extra";
+    let extraCostoUnitario = Number(document.getElementById("extraCosto").value) || 0;
+    let extraCostoTotal = extraCostoUnitario * cantidad;
+
     let pesoTotal = peso * cantidad;
     let horasTotales = horasUnitarias * cantidad;
 
@@ -454,7 +466,9 @@ function calcular() {
     let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
     let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
 
-    let subtotal = material + desperdicio + desgaste + energia;
+    // Subtotal sumando el extra
+    let subtotal = material + desperdicio + desgaste + energia + extraCostoTotal;
+    
     let falla = Number(document.getElementById("falla").value) || 0;
     let corregido = subtotal * (1 + falla / 100);
     let beneficio = Number(document.getElementById("beneficio").value) || 0;
@@ -472,15 +486,25 @@ function calcular() {
         boxUnitario.style.display = "none";
     }
 
-    document.getElementById("detalle").innerHTML = `
+    // Generar el desglose técnico
+    let htmlDetalle = `
         <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
         <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
         <div class="breakdown-item mat"><span>Desperdicio (${desp}%):</span> <strong>${fmt(desperdicio)}</strong></div>
         <div class="breakdown-item desg"><span>Desgaste Impresora:</span> <strong>${fmt(desgaste)} (${horasTotales.toFixed(1)} hs)</strong></div>
         <div class="breakdown-item nrg"><span>Consumo de Red:</span> <strong>${fmt(energia)}</strong></div>
+    `;
+
+    if (extraCostoTotal > 0) {
+        htmlDetalle += `<div class="breakdown-item" style="border-left-color: #8b5cf6;"><span>Extra (${extraDesc}):</span> <strong>${fmt(extraCostoTotal)}</strong></div>`;
+    }
+
+    htmlDetalle += `
         <div class="breakdown-item"><span>Margen de Falla (${falla}%):</span> <strong>+ ${fmt(corregido - subtotal)}</strong></div>
         <div class="breakdown-item" style="border-left-color: var(--success)"><span>Retorno (${beneficio}%):</span> <strong>+ ${fmt(precio - corregido)}</strong></div>
     `;
+
+    document.getElementById("detalle").innerHTML = htmlDetalle;
     
     return {
         costo: corregido,
@@ -492,7 +516,9 @@ function calcular() {
         peso: peso,
         horas: document.getElementById("horas").value,
         minutos: document.getElementById("minutos").value,
-        tipo: document.getElementById("tipo").value
+        tipo: document.getElementById("tipo").value,
+        extraDesc: extraDesc,
+        extraCostoUnitario: extraCostoUnitario
     };
 }
 
@@ -502,12 +528,18 @@ async function guardarEnSheets() {
     btn.disabled = true;
     btn.innerText = "Guardando... ⏳";
 
+    // Armando el resumen de material + extra si corresponde
+    let matResumen = calc.tipo + " (" + (calc.peso || "0") + "g)";
+    if (calc.extraCostoUnitario > 0) {
+        matResumen += " + Extra: " + calc.extraDesc + " (" + fmt(calc.extraCostoUnitario) + ")";
+    }
+
     let payload = {
         action: "save",
         fecha: new Date().toLocaleDateString("es-AR"),
         nombre: document.getElementById("nombre").value || "Sin nombre",
-        materialStr: document.getElementById("tipo").value + " (" + (document.getElementById("peso").value || "0") + "g)",
-        tiempoStr: (document.getElementById("horas").value || "0") + "h " + (document.getElementById("minutos").value || "0") + "m",
+        materialStr: matResumen,
+        tiempoStr: (calc.horas || "0") + "h " + (calc.minutos || "0") + "m",
         cantidad: calc.cantidad,
         costoUnitario: fmt(calc.costoUnitario),
         costoReal: fmt(calc.costo),
@@ -530,6 +562,8 @@ async function guardarEnSheets() {
 
         alert("¡Presupuesto guardado exitosamente!");
         document.getElementById("nombre").value = "";
+        document.getElementById("extraDesc").value = "";
+        document.getElementById("extraCosto").value = "";
         setTimeout(cargarDeSheets, 1200);
     } catch(err) {
         alert("Error al guardar: " + err);
