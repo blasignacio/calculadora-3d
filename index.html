@@ -284,6 +284,9 @@ td {
 
             <label>Margen de desperdicio (%)</label>
             <input id="desperdicio" type="number" value="5">
+
+            <label>Costo Material Extra / Insumos ($)</label>
+            <input id="materialExtra" type="number" placeholder="Tornillos, resortes, packaging (opcional)" value="0">
         </div>
 
         <div class="card">
@@ -398,24 +401,19 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhLzaDk7rpNx27vZ-s3
 
 let historialLocal = [];
 
-// Formateador de moneda corregido para evitar confusiones entre comas y puntos
 function fmt(v){
-    if (v === null || v === undefined || v === "") return "$0";
-    
-    // Si ya viene formateado como String desde la hoja (ej: "$17.17" o "$ 8.58")
+    if (v === null || v === undefined || v === "") return "$ 0.00";
     if (typeof v === "string") {
         let limpio = v.trim();
         if (limpio.startsWith("$")) return limpio;
-        // Limpiamos espacios y caracteres no numéricos excepto puntos/comas
         limpio = limpio.replace(/[^0-9.,-]/g, '');
         let num = parseFloat(limpio.replace(',', '.'));
         if (!isNaN(num)) {
             return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     }
-    
     let num = Number(v);
-    if (isNaN(num)) return "$0";
+    if (isNaN(num)) return "$ 0.00";
     return "$ " + num.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -443,18 +441,20 @@ function calcular() {
     let precioKg = Number(document.getElementById("precioKg").value) || 0;
     let peso = Number(document.getElementById("peso").value) || 0;
     let desp = Number(document.getElementById("desperdicio").value) || 0;
+    let matExtraVal = Number(document.getElementById("materialExtra").value) || 0;
     let horasUnitarias = (Number(document.getElementById("horas").value) || 0) + (Number(document.getElementById("minutos").value) || 0) / 60;
     let cantidad = Number(document.getElementById("cantidad").value) || 1;
 
     let pesoTotal = peso * cantidad;
     let horasTotales = horasUnitarias * cantidad;
+    let matExtraTotal = matExtraVal * cantidad;
 
     let material = (precioKg / 1000) * pesoTotal;
     let desperdicio = material * (desp / 100);
     let desgaste = ((Number(document.getElementById("valorImp").value) || 0) / (Number(document.getElementById("vidaUtil").value) || 1)) * horasTotales;
     let energia = ((Number(document.getElementById("consumo").value) || 0) / 1000) * horasTotales * (Number(document.getElementById("kwh").value) || 0);
 
-    let subtotal = material + desperdicio + desgaste + energia;
+    let subtotal = material + desperdicio + desgaste + energia + matExtraTotal;
     let falla = Number(document.getElementById("falla").value) || 0;
     let corregido = subtotal * (1 + falla / 100);
     let beneficio = Number(document.getElementById("beneficio").value) || 0;
@@ -476,6 +476,7 @@ function calcular() {
         <div class="breakdown-item mat"><span>Cantidad de Piezas:</span> <strong>${cantidad} u.</strong></div>
         <div class="breakdown-item mat"><span>Material Total:</span> <strong>${fmt(material)} (${pesoTotal}g total / ${peso}g u.)</strong></div>
         <div class="breakdown-item mat"><span>Desperdicio (${desp}%):</span> <strong>${fmt(desperdicio)}</strong></div>
+        <div class="breakdown-item mat"><span>Insumos Extra:</span> <strong>${fmt(matExtraTotal)}</strong></div>
         <div class="breakdown-item desg"><span>Desgaste Impresora:</span> <strong>${fmt(desgaste)} (${horasTotales.toFixed(1)} hs)</strong></div>
         <div class="breakdown-item nrg"><span>Consumo de Red:</span> <strong>${fmt(energia)}</strong></div>
         <div class="breakdown-item"><span>Margen de Falla (${falla}%):</span> <strong>+ ${fmt(corregido - subtotal)}</strong></div>
@@ -490,9 +491,10 @@ function calcular() {
         beneficio: beneficio,
         precioKg: precioKg,
         peso: peso,
-        horas: document.getElementById("horas").value,
-        minutos: document.getElementById("minutos").value,
-        tipo: document.getElementById("tipo").value
+        horas: document.getElementById("horas").value || "0",
+        minutos: document.getElementById("minutos").value || "0",
+        tipo: document.getElementById("tipo").value,
+        materialExtra: matExtraVal
     };
 }
 
@@ -502,22 +504,26 @@ async function guardarEnSheets() {
     btn.disabled = true;
     btn.innerText = "Guardando... ⏳";
 
+    let hoy = new Date();
+    let fechaStr = hoy.getDate().toString().padStart(2, '0') + '/' + (hoy.getMonth() + 1).toString().padStart(2, '0') + '/' + hoy.getFullYear();
+
     let payload = {
         action: "save",
-        fecha: new Date().toLocaleDateString("es-AR"),
-        nombre: document.getElementById("nombre").value || "Sin nombre",
-        materialStr: document.getElementById("tipo").value + " (" + (document.getElementById("peso").value || "0") + "g)",
-        tiempoStr: (document.getElementById("horas").value || "0") + "h " + (document.getElementById("minutos").value || "0") + "m",
-        cantidad: calc.cantidad,
-        costoUnitario: fmt(calc.costoUnitario),
-        costoReal: fmt(calc.costo),
-        precio: fmt(calc.precio),
-        beneficio: calc.beneficio,
-        precioKg: calc.precioKg,
-        peso: calc.peso,
-        horas: calc.horas,
-        minutos: calc.minutos,
-        tipo: calc.tipo
+        FECHA: fechaStr,
+        PROYECTO: document.getElementById("nombre").value || "Sin nombre",
+        MATERIAL_RESUMEN: document.getElementById("tipo").value + " (" + (document.getElementById("peso").value || "0") + "g)",
+        MATERIAL_EXTRA: calc.materialExtra > 0 ? fmt(calc.materialExtra) : "-",
+        TIEMPO_RESUMEN: (document.getElementById("horas").value || "0") + "h " + (document.getElementById("minutos").value || "0") + "m",
+        CANTIDAD: calc.cantidad,
+        COSTO_UNITARIO: fmt(calc.costoUnitario),
+        COSTO_REAL: fmt(calc.costo),
+        COTIZACION_REAL: fmt(calc.precio),
+        BENEFICIO: calc.beneficio,
+        PRECIO_KG: calc.precioKg,
+        PESO: calc.peso,
+        HORAS: calc.horas,
+        MINUTOS: calc.minutos,
+        TIPO: calc.tipo
     };
 
     try {
@@ -563,20 +569,28 @@ async function cargarDeSheets() {
 
     try {
         let res = await fetch(SCRIPT_URL);
-        historialLocal = await res.json();
+        let jsonRes = await res.json();
+        historialLocal = Array.isArray(jsonRes) ? jsonRes : (jsonRes.data || []);
         
         let html = "";
         for(let i = historialLocal.length - 1; i >= 0; i--) {
             let x = historialLocal[i];
 
             let fFecha = obtenerValor(x, ["FECHA", "fecha"]);
+            if(fFecha && fFecha.includes("T")) {
+                let d = new Date(fFecha);
+                if(!isNaN(d.getTime())) {
+                    fFecha = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getFullYear();
+                }
+            }
+
             let fNombre = obtenerValor(x, ["PROYECTO", "nombre"]) || "Sin nombre";
             let fMaterial = obtenerValor(x, ["MATERIAL_RESUMEN", "materialStr"]);
             let fTiempo = obtenerValor(x, ["TIEMPO_RESUMEN", "tiempoStr"]);
             let fCant = obtenerValor(x, ["CANTIDAD", "cantidad"]) || 1;
             
             let fCostoU = obtenerValor(x, ["COSTO_UNITARIO", "costoUnitario"]) || "0";
-            let fCostoR = obtenerValor(x, ["COSTO_REAL", "COSTO _REAL", "costoReal"]) || "0";
+            let fCostoR = obtenerValor(x, ["COSTO_REAL", "costoReal"]) || "0";
             let fPrecio = obtenerValor(x, ["COTIZACION_REAL", "precio"]) || "0";
 
             fCostoU = fmt(fCostoU);
@@ -594,7 +608,7 @@ async function cargarDeSheets() {
                 <td><span style="color:#10b981; font-weight:700;">${fPrecio}</span></td>
                 <td>
                     <button class="btn-tbl btn-tbl-load" onclick="cargarProyecto(${i})">✏️ Cargar</button>
-                    <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto(${i})">🗑️ Borrar</button>
+                    <button class="btn-tbl btn-tbl-del" onclick="eliminarProyecto('${fNombre.replace(/'/g, "\\'")}')">🗑️ Borrar</button>
                 </td>
             </tr>`;
         }
@@ -616,6 +630,7 @@ function cargarProyecto(index) {
     let minutos = obtenerValor(item, ["MINUTOS", "minutos"]);
     let cantidad = obtenerValor(item, ["CANTIDAD", "cantidad"]) || 1;
     let tipo = obtenerValor(item, ["TIPO", "tipo"]) || "PLA";
+    let matExtra = obtenerValor(item, ["MATERIAL_EXTRA", "materialExtra"]);
 
     let matStr = obtenerValor(item, ["MATERIAL_RESUMEN", "materialStr"]);
     if(matStr && matStr.includes("(")) {
@@ -629,6 +644,11 @@ function cargarProyecto(index) {
     if(minutos) document.getElementById("minutos").value = minutos;
     if(cantidad) document.getElementById("cantidad").value = cantidad;
     
+    if(matExtra) {
+        let extraLimpio = String(matExtra).replace(/[^0-9.,-]/g, '').replace(',', '.');
+        document.getElementById("materialExtra").value = parseFloat(extraLimpio) || 0;
+    }
+
     let selectTipo = document.getElementById("tipo");
     for(let i = 0; i < selectTipo.options.length; i++) {
         if(selectTipo.options[i].value.toLowerCase() === tipo.toLowerCase()) {
@@ -641,20 +661,18 @@ function cargarProyecto(index) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function eliminarProyecto(index) {
-    if(!confirm("¿Estás seguro de que querés borrar este registro del historial?")) return;
+async function eliminarProyecto(nombreProyecto) {
+    if(!confirm(`¿Estás seguro de que querés borrar "${nombreProyecto}" del historial?`)) return;
 
     let status = document.getElementById("syncStatus");
     status.innerHTML = `<span class="status-badge status-loading">Eliminando...</span>`;
-
-    let realIndex = (historialLocal.length - 1) - index;
 
     try {
         await fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "delete", rowIndex: realIndex })
+            body: JSON.stringify({ action: "delete", PROYECTO: nombreProyecto })
         });
 
         alert("Registro eliminado correctamente.");
